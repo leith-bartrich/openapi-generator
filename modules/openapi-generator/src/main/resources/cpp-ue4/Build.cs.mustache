@@ -12,7 +12,8 @@ public class {{unrealModuleName}} : ModuleRules
             {
                 "Core",
                 "Http",
-                "Json",
+                "Json",{{#generateBPUObjects}}
+                "CoreUObject",{{/generateBPUObjects}}
             }
         );
         PCHUsage = PCHUsageMode.NoPCHs;

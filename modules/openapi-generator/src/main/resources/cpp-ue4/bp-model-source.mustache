@@ -1,0 +1,84 @@
+{{>licenseInfo}}
+
+#include "BP{{classname}}.h"
+
+{{#models}}
+{{#model}}
+
+void U{{BPAPIPrefix}}{{classname}}::PostInitProperties()
+{
+    UObject::PostInitProperties();
+    this->model = MakeShared<{{cppNamespace}}::{{classname}}>();
+}
+
+
+void U{{BPAPIPrefix}}{{classname}}::BeginDestroy()
+{
+    UObject::BeginDestroy();
+}
+
+U{{BPAPIPrefix}}{{classname}}* U{{BPAPIPrefix}}{{classname}}::FromCPPModel(const {{cppNamespace}}::{{classname}}* in_model)
+{
+    //returns objects based on copies of the original incoming models.
+    //this allows garbage collection of individual models.
+    auto ret = NewObject<U{{BPAPIPrefix}}{{classname}}>();
+    ret->model = MakeShared<{{cppNamespace}}::{{classname}}>(*const_cast<{{cppNamespace}}::{{classname}}*>(in_model));
+    return ret;
+}
+
+
+TArray<U{{BPAPIPrefix}}{{classname}}*> U{{BPAPIPrefix}}{{classname}}::FromCPPModelArray(
+    const TArray<{{cppNamespace}}::{{classname}}> * in_models)
+{
+    auto ret = TArray<U{{BPAPIPrefix}}{{classname}}*>();
+    ret.Empty(in_models->Num());
+     for (auto in_model : *in_models)
+    {
+        //see FromCPPModel for explanation of memory management (clones) here.
+        //we take the hit of allocating each member individually because GC will be able to free/keep the members individually later.
+        auto element = FromCPPModel(&in_model);
+        ret.Emplace(element);
+    }
+    return ret;
+}
+
+TSharedPtr<{{cppNamespace}}::{{classname}}> U{{BPAPIPrefix}}{{classname}}::GetModel()
+{
+    return this->model;
+}
+
+U{{BPAPIPrefix}}{{classname}}* U{{BPAPIPrefix}}{{classname}}::GetNew{{BPAPIPrefix}}{{classname}}Model()
+{
+    return NewObject<U{{BPAPIPrefix}}{{classname}}>();
+}
+
+
+{{#vars}}
+
+void U{{BPAPIPrefix}}{{classname}}::{{setter}}(const {{datatype}} & in_{{name}})
+{
+    this->model->{{name}} = in_{{name}};
+}
+
+{{datatype}} U{{BPAPIPrefix}}{{classname}}::{{getter}}()
+{
+    return this->model->{{name}}{{^required}}.GetValue(){{/required}};
+}
+
+{{^required}}
+bool U{{BPAPIPrefix}}{{classname}}::{{name}}IsSet()
+{
+    return this->model->{{name}}.IsSet();
+}
+
+void U{{BPAPIPrefix}}{{classname}}::Reset{{name}}()
+{
+    this->model->{{name}}.Reset();
+}
+
+{{/required}}
+
+{{/vars}}
+
+{{/model}}
+{{/models}}

@@ -79,6 +79,14 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
                 "model-source.mustache",
                 ".cpp");
 
+        modelTemplateFiles.put(
+                "bp-model-header.mustache",
+                ".h");
+
+        modelTemplateFiles.put(
+                "bp-model-source.mustache",
+                ".cpp");
+
         /*
          * Api classes.  You can write classes for each Api file with the apiTemplateFiles map.
          * as with models, add multiple entries with different extensions for multiple files per
@@ -99,6 +107,14 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
         apiTemplateFiles.put(
                 "api-operations-source.mustache",   // the template to use
                 ".cpp");       // the extension for each file to write
+
+        apiTemplateFiles.put(
+                "bp-api-header.mustache",
+                ".h");
+
+        apiTemplateFiles.put(
+                "bp-api-source.mustache",
+                ".cpp");
 
         /*
          * Template Location.  This is the location which templates will be read from.  The generator
@@ -223,6 +239,17 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
             additionalProperties.put(CodegenConstants.OPTIONAL_PROJECT_FILE, optionalProjectFileFlag);
         }
 
+        if (additionalProperties.containsKey("generateBPType")){
+            additionalProperties().put("generateBP",true);
+            String generateBPType = (String) additionalProperties.get("generateBPType");
+            if (generateBPType.equalsIgnoreCase("UObjects")){
+                additionalProperties().put("generateBP" + generateBPType,true);
+            }
+            if(!additionalProperties.containsKey("BPAPIPrefix")){
+                additionalProperties().put("BPAPIPrefix","");
+            }
+        }
+
         if (updateSupportingFiles) {
             supportingFiles.clear();
 
@@ -340,8 +367,12 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
         if (".h".equals(suffix)) {
             folder = publicFolder;
         }
+        if (templateName.startsWith("bp-")){
+            return modelFileFolder() + File.separator + folder + File.separator + "BP" + toModelFilename(modelName) + suffix;
+        } else {
+            return modelFileFolder() + File.separator + folder + File.separator + toModelFilename(modelName) + suffix;
+        }
 
-        return modelFileFolder() + File.separator + folder + File.separator + toModelFilename(modelName) + suffix;
     }
 
     @Override
@@ -360,6 +391,8 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
 
         if (templateName.startsWith("api-operations")) {
             return apiFileFolder() + File.separator + folder + File.separator + toApiFilename(tag) + "Operations" + suffix;
+        } else if (templateName.startsWith("bp-")){
+            return apiFileFolder() + File.separator + folder + File.separator + "BP" + toApiFilename(tag) + suffix;
         } else {
             return apiFileFolder() + File.separator + folder + File.separator + toApiFilename(tag) + suffix;
         }

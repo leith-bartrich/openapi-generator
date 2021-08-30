@@ -1,0 +1,233 @@
+{{>licenseInfo}}
+
+#include "BP{{classname}}.h"
+#include "{{classname}}Operations.h"
+
+{{#imports}}#include "BP{{classname}}.h"
+{{/imports}}
+
+//{{BPAPIPrefix}}{{classname}}
+
+void U{{BPAPIPrefix}}{{classname}}::PostInitProperties()
+{
+    UObject::PostInitProperties();
+    this->api = MakeShared<{{cppNamespace}}::{{classname}}>();
+}
+
+TSharedPtr<{{cppNamespace}}::{{classname}}> U{{BPAPIPrefix}}{{classname}}::GetAPI()
+{
+    return this->api;
+}
+
+U{{BPAPIPrefix}}{{classname}} * U{{BPAPIPrefix}}{{classname}}::GetNew{{BPAPIPrefix}}{{classname}}API()
+{
+    return NewObject<U{{BPAPIPrefix}}{{classname}}>();
+}
+
+void U{{BPAPIPrefix}}{{classname}}::BeginDestroy()
+{
+    UObject::BeginDestroy();
+}
+
+void U{{BPAPIPrefix}}{{classname}}::SetURL(const FString& in_url)
+{
+    this->api.Get()->SetURL(in_url);
+}
+
+void U{{BPAPIPrefix}}{{classname}}::AddHeaderParameter(const FString& in_key, const FString& in_value)
+{
+    this->api.Get()->AddHeaderParam(in_key,in_value);
+}
+
+void U{{BPAPIPrefix}}{{classname}}::ClearHeaderParameters()
+{
+    this->api.Get()->ClearHeaderParams();
+}
+
+
+{{#operations}}
+{{#operation}}
+
+//{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}
+
+//Request
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::PostInitProperties()
+{
+    UObject::PostInitProperties();
+    this->request = MakeShared<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request>();
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::BeginDestroy()
+{
+    UObject::BeginDestroy();
+}
+
+TSharedPtr<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request> U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::GetRequest()
+{
+    return this->request;
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::ExecuteRequest(U{{BPAPIPrefix}}{{classname}}* in_api)
+{
+    auto response_functor = {{cppNamespace}}::{{classname}}::F{{operationIdCamelCase}}Delegate();
+    response_functor.BindLambda([this](const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response & response)
+    {
+        this->OnResponseInternal(&response);
+    });
+    auto http_request = in_api->GetAPI()->{{operationIdCamelCase}}(*this->request,response_functor);
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::OnResponseInternal(
+    const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response* in_response)
+{
+    auto response_wrapper = NewObject<U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response>();
+    //the response object exists as a stack variable. It will not survive past this call's return.  So we clone it here (MakeShared not MakeSharable)
+    response_wrapper->SetResponse(MakeShared<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response>(*in_response));
+    this->OnResponse(response_wrapper);
+    this->OnResponseEvent.Broadcast(this,response_wrapper);
+    this->OnResponseDynamicEvent.Broadcast(this,response_wrapper);
+
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::OnResponse_Implementation(
+    U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response* response)
+{
+}
+
+U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request * U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::GetNew{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request()
+{
+    auto ret = NewObject<U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request>();
+    return ret;
+}
+
+{{#allParams}}
+{{#isEnum}}
+{{datatypeWithEnum}} U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Get{{paramName}}()
+{
+    return this->request->{{paramName}}{{^required}}.GetValue(){{/required}};
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Set{{paramName}}({{datatypeWithEnum}} in_value)
+{
+    this->request->{{paramName}} = in_value;
+}
+
+{{^required}}
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::{{paramName}}IsSet()
+{
+    return this->request->{{paramName}}.IsSet();
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Reset{{paramName}}()
+{
+    this->request->{{paramName}}.Reset();
+}
+{{/required}}
+{{/isEnum}}
+{{^isEnum}}
+{{#isModel}}
+U{{BPAPIPrefix}}{{dataType}} * U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Get{{paramName}}()
+{
+    auto model = this->request->{{paramName}}{{^required}}.GetValue(){{/required}};
+    return U{{BPAPIPrefix}}{{dataType}}::FromCPPModel(&model);
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Set{{paramName}}(U{{BPAPIPrefix}}{{dataType}} * in_value)
+{
+    this->request->{{paramName}} = *in_value->GetModel();
+}
+{{/isModel}}
+
+{{^isModel}}
+{{dataType}} U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Get{{paramName}}()
+{
+    return this->request->{{paramName}}{{^required}}.GetValue(){{/required}};
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Set{{paramName}}({{dataType}} in_value)
+{
+    this->request->{{paramName}} = in_value;
+}
+
+{{/isModel}}
+{{^required}}
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::{{paramName}}IsSet()
+{
+    return this->request->{{paramName}}.IsSet();
+}
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::Reset{{paramName}}()
+{
+    this->request->{{paramName}}.Reset();
+}
+{{/required}}
+{{/isEnum}}
+{{/allParams}}
+
+//Response
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::PostInitProperties()
+{
+    UObject::PostInitProperties();
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::BeginDestroy()
+{
+    UObject::BeginDestroy();
+}
+
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::SetResponse(
+    const TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response> in_response)
+{
+    this->response = in_response;
+}
+
+TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response> U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetResponse() const
+{
+    return this->response;
+}
+
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsSuccessful() const
+{
+    return this->response.Get()->IsSuccessful();
+}
+
+int32 U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetHttpResponseCode() const
+{
+    return this->response.Get()->GetHttpResponseCode();
+}
+
+const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetResponseString() const
+{
+    return this->response.Get()->GetResponseString();
+}
+
+{{#responses.0}}
+{{#isModel}}
+U{{BPAPIPrefix}}{{baseType}} * U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetContent(){
+    auto ret = U{{BPAPIPrefix}}{{baseType}}::FromCPPModel(&this->response->Content);
+    return ret;
+}
+{{/isModel}}
+{{^isModel}}
+{{#isArray}}
+TArray<U{{BPAPIPrefix}}{{baseType}} *> U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetContent(){
+    auto ret = U{{BPAPIPrefix}}{{baseType}}::FromCPPModelArray(&this->response->Content);
+    return ret;
+}
+{{/isArray}}
+{{^isArray}}
+{{#returnType}}
+{{{.}}} & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetContent(){
+    auto ret = this->response->Content;
+    return ret;
+}
+{{/returnType}}
+{{/isArray}}
+{{/isModel}}
+{{/responses.0}}
+
+
+
+{{/operation}}
+{{/operations}}

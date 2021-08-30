@@ -1,0 +1,51 @@
+{{>licenseInfo}}
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Object.h"
+#include "{{classname}}.h"
+#include "BP{{classname}}.generated.h"
+
+{{#models}}
+{{#model}}
+UCLASS(Blueprintable)
+class {{dllapi}} U{{BPAPIPrefix}}{{classname}} : public UObject
+{
+    GENERATED_BODY()
+
+    public:
+
+    virtual void PostInitProperties() override;
+
+    virtual void BeginDestroy() override;
+
+    static U{{BPAPIPrefix}}{{classname}}* FromCPPModel(const {{cppNamespace}}::{{classname}} * in_model);
+    static TArray<U{{BPAPIPrefix}}{{classname}}*> FromCPPModelArray(const TArray<{{cppNamespace}}::{{classname}}> * in_models);
+
+    TSharedPtr<{{cppNamespace}}::{{classname}}> GetModel();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+    static U{{BPAPIPrefix}}{{classname}}* GetNew{{BPAPIPrefix}}{{classname}}Model();
+
+{{#vars}}
+	UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+	void {{setter}}(const {{datatype}} & in_{{name}});
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}})
+	{{datatype}} {{getter}}();
+
+{{^required}}
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}})
+	bool {{name}}IsSet();
+
+	UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+	void Reset{{name}}();
+{{/required}}
+{{/vars}}
+
+private:
+    TSharedPtr<{{cppNamespace}}::{{classname}}> model;
+
+};
+{{/model}}
+{{/models}}

@@ -1,0 +1,192 @@
+{{>licenseInfo}}
+#pragma once
+
+#include "CoreMinimal.h"
+#include "UObject/Object.h"
+#include "{{classname}}.h"
+#include "BP{{classname}}.generated.h"
+
+
+
+UCLASS(Blueprintable)
+class {{dllapi}} U{{BPAPIPrefix}}{{classname}} : public UObject
+{
+    GENERATED_BODY()
+
+    public:
+
+    virtual void PostInitProperties() override;
+
+
+    virtual void BeginDestroy() override;
+
+    TSharedPtr<{{cppNamespace}}::{{classname}}> GetAPI();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+    static U{{BPAPIPrefix}}{{classname}} * GetNew{{BPAPIPrefix}}{{classname}}API();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+    void SetURL(const FString & in_url);
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+    void AddHeaderParameter(const FString & in_key, const FString & in_value);
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+    void ClearHeaderParameters();
+
+private:
+    TSharedPtr<{{cppNamespace}}::{{classname}}> api;
+
+
+};
+
+//forward declarations of models for all requests and responses
+{{#imports}}class U{{BPAPIPrefix}}{{classname}};
+{{/imports}}
+
+
+{{#operations}}
+{{#operation}}
+
+//forward declarations of {{classname}}{{operationIdCamelCase}} request and response for delegate declaration
+class U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request;
+class U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response;
+
+
+
+UCLASS(Blueprintable)
+class {{dllapi}} U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request : public UObject
+{
+    GENERATED_BODY()
+
+public:
+    virtual void PostInitProperties() override;
+
+
+    virtual void BeginDestroy() override;
+
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void ExecuteRequest(U{{BPAPIPrefix}}{{classname}} * in_api);
+
+    TSharedPtr<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request> GetRequest();
+
+    UFUNCTION(BlueprintNativeEvent, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void OnResponse(U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response * response);
+
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResponseDynamicDelegate, U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request *, request, U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response *, response);
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnResponseDelegate, U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request *, U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response *);
+
+    UPROPERTY(BlueprintAssignable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    FOnResponseDynamicDelegate OnResponseDynamicEvent;
+
+    FOnResponseDelegate OnResponseEvent;
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    static U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request * GetNew{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request();
+
+    {{#allParams}}
+    {{#isEnum}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    {{datatypeWithEnum}} Get{{paramName}}();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void Set{{paramName}}({{datatypeWithEnum}} in_value {{#defaultValue}} = {{{.}}}{{/defaultValue}});
+
+    {{^required}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    bool {{paramName}}IsSet();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void Reset{{paramName}}();
+    {{/required}}
+    {{/isEnum}}
+    {{^isEnum}}
+    {{#isModel}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    U{{BPAPIPrefix}}{{dataType}} * Get{{paramName}}();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void Set{{paramName}}(U{{BPAPIPrefix}}{{dataType}} * in_value {{#defaultValue}} = {{{.}}}{{/defaultValue}});
+    {{/isModel}}
+    {{^isModel}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    {{dataType}} Get{{paramName}}();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void Set{{paramName}}({{dataType}} in_value {{#defaultValue}} = {{{.}}}{{/defaultValue}});
+
+    {{/isModel}}
+
+
+    {{^required}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    bool {{paramName}}IsSet();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void Reset{{paramName}}();
+    {{/required}}
+    {{/isEnum}}
+    {{/allParams}}
+
+private:
+
+    void OnResponseInternal(const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response * in_response);
+    TSharedPtr<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request> request;
+
+};
+
+
+UCLASS(Blueprintable)
+class {{dllapi}} U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response : public UObject
+{
+    GENERATED_BODY()
+
+public:
+
+    virtual void PostInitProperties() override;
+
+    virtual void BeginDestroy() override;
+
+    void SetResponse(TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response> in_response);
+    TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response> GetResponse() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    bool IsSuccessful() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    int32 GetHttpResponseCode() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    const FString & GetResponseString() const;
+
+
+private:
+
+    TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response> response;
+
+public:
+
+    {{#responses.0}}
+    {{#isModel}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    U{{BPAPIPrefix}}{{baseType}} * GetContent();
+    {{/isModel}}
+    {{^isModel}}
+    {{#isArray}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    TArray<U{{BPAPIPrefix}}{{baseType}} *> GetContent();
+    {{/isArray}}
+    {{^isArray}}
+    {{#returnType}}
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    {{{.}}} & GetContent();
+    {{/returnType}}
+    {{/isArray}}
+    {{/isModel}}
+    {{/responses.0}}
+
+};
+
+{{/operation}}
+{{/operations}}
