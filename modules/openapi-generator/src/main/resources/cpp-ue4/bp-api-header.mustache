@@ -133,6 +133,7 @@ private:
 
     void OnResponseInternal(const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response * in_response);
     TSharedPtr<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request> request;
+    FHttpRequestPtr http_request;
 
 };
 

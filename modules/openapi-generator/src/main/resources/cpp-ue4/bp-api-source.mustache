@@ -75,7 +75,7 @@ void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::ExecuteReques
     {
         this->OnResponseInternal(&response);
     });
-    auto http_request = in_api->GetAPI()->{{operationIdCamelCase}}(*this->request,response_functor);
+    this->http_request = in_api->GetAPI()->{{operationIdCamelCase}}(*this->request,response_functor);
 }
 
 void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::OnResponseInternal(

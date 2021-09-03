@@ -9,6 +9,7 @@ void U{{BPAPIPrefix}}{{classname}}::PostInitProperties()
 {
     UObject::PostInitProperties();
     this->model = MakeShared<{{cppNamespace}}::{{classname}}>();
+    this->HasChanged = false;
 }
 
 
@@ -23,6 +24,7 @@ U{{BPAPIPrefix}}{{classname}}* U{{BPAPIPrefix}}{{classname}}::FromCPPModel(const
     //this allows garbage collection of individual models.
     auto ret = NewObject<U{{BPAPIPrefix}}{{classname}}>();
     ret->model = MakeShared<{{cppNamespace}}::{{classname}}>(*const_cast<{{cppNamespace}}::{{classname}}*>(in_model));
+    ret->HasChanged = false;
     return ret;
 }
 
@@ -49,15 +51,105 @@ TSharedPtr<{{cppNamespace}}::{{classname}}> U{{BPAPIPrefix}}{{classname}}::GetMo
 
 U{{BPAPIPrefix}}{{classname}}* U{{BPAPIPrefix}}{{classname}}::GetNew{{BPAPIPrefix}}{{classname}}Model()
 {
-    return NewObject<U{{BPAPIPrefix}}{{classname}}>();
+    auto ret = NewObject<U{{BPAPIPrefix}}{{classname}}>();
+    ret->HasChanged = false;
+    return ret;
 }
 
+void U{{BPAPIPrefix}}{{classname}}::TriggerAllPropertiesChanged(const bool only_bindable_events, const bool skip_set_has_changed)
+{
+{{#vars}}
+{{#required}}
+        {{datatype}} {{name}}_current_value = this->model->{{name}};
+        if (!only_bindable_events){
+            this->On{{name}}Changed({{name}}_current_value,{{name}}_current_value);
+        }
+        this->On{{name}}ChangedEvent.Broadcast(this,{{name}}_current_value,{{name}}_current_value);
+        this->On{{name}}ChangedDynamicEvent.Broadcast(this,{{name}}_current_value,{{name}}_current_value);
+{{/required}}
+{{^required}}
+        {{datatype}} {{name}}_current_value;
+        bool {{name}}_is_set = this->model->{{name}}.IsSet();
+        if ({{name}}_is_set){
+            {{name}}_current_value = this->model->{{name}}.GetValue();
+        }
+        if (!only_bindable_events){
+            this->On{{name}}Changed({{name}}_is_set,{{name}}_is_set,{{name}}_current_value,{{name}}_current_value);
+        }
+        this->On{{name}}ChangedEvent.Broadcast(this,{{name}}_is_set,{{name}}_is_set,{{name}}_current_value,{{name}}_current_value);
+        this->On{{name}}ChangedDynamicEvent.Broadcast(this,{{name}}_is_set,{{name}}_is_set,{{name}}_current_value,{{name}}_current_value);
+{{/required}}
+{{/vars}}
+        if (!skip_set_has_changed){
+            this->HasChanged = true;
+        }
+        if (this->HasChanged){
+            if (!only_bindable_events){
+                this->OnAnyChanged();
+            }
+            this->OnAnyChangedEvent.Broadcast(this);
+            this->OnAnyChangedDynamicEvent.Broadcast(this);
+        }
+}
+
+void U{{BPAPIPrefix}}{{classname}}::OnAnyChanged_Implementation()
+{
+}
+
+bool U{{BPAPIPrefix}}{{classname}}::GetHasChanged()
+{
+    return this->HasChanged;
+}
 
 {{#vars}}
+{{#required}}
+void U{{BPAPIPrefix}}{{classname}}::On{{name}}Changed_Implementation(const {{datatype}} & old_Value, const {{datatype}} & new_value)
+{
+}
+{{/required}}
+{{^required}}
+void U{{BPAPIPrefix}}{{classname}}::On{{name}}Changed_Implementation(bool was_set, bool is_set, const {{datatype}} & old_Value, const {{datatype}} & new_value)
+{
+}
+{{/required}}
+
 
 void U{{BPAPIPrefix}}{{classname}}::{{setter}}(const {{datatype}} & in_{{name}})
 {
+    {{datatype}} old_value;
+    {{#required}}
+    old_value = this->model->{{name}};
+    if (old_value == in_{{name}}){
+        return;
+    }
+    {{/required}}
+    {{^required}}
+    auto was_set = this->model->{{name}}.IsSet();
+    if (was_set){
+        old_value = this->model->{{name}}.GetValue();
+        if (old_value == in_{{name}}){
+            return;
+        }
+    }
+    {{/required}}
+
     this->model->{{name}} = in_{{name}};
+
+    {{#required}}
+    this->On{{name}}Changed(old_value,in_{{name}});
+    this->On{{name}}ChangedEvent.Broadcast(this,old_value,in_{{name}});
+    this->On{{name}}ChangedDynamicEvent.Broadcast(this,old_value,in_{{name}});
+    this->OnAnyChangedEvent.Broadcast(this);
+    this->OnAnyChangedDynamicEvent.Broadcast(this);
+    {{/required}}
+    {{^required}}
+    this->On{{name}}Changed(was_set,true,old_value,in_{{name}});
+    this->On{{name}}ChangedEvent.Broadcast(this,was_set,true,old_value,in_{{name}});
+    this->On{{name}}ChangedDynamicEvent.Broadcast(this,was_set,true,old_value,in_{{name}});
+    {{/required}}
+    this->OnAnyChangedEvent.Broadcast(this);
+    this->OnAnyChangedDynamicEvent.Broadcast(this);
+    this->HasChanged = true;
 }
 
 {{datatype}} U{{BPAPIPrefix}}{{classname}}::{{getter}}()
@@ -73,7 +165,19 @@ bool U{{BPAPIPrefix}}{{classname}}::{{name}}IsSet()
 
 void U{{BPAPIPrefix}}{{classname}}::Reset{{name}}()
 {
+
+    if (!this->model->{{name}}.IsSet()){
+        return;
+    }
+    auto old_value = this->model->{{name}}.GetValue();
+    {{datatype}} new_value;
     this->model->{{name}}.Reset();
+    this->On{{name}}Changed(true,false,old_value,new_value);
+    this->On{{name}}ChangedEvent.Broadcast(this,true,false,old_value,new_value);
+    this->On{{name}}ChangedDynamicEvent.Broadcast(this,true,false,old_value,new_value);
+    this->OnAnyChangedEvent.Broadcast(this);
+    this->OnAnyChangedDynamicEvent.Broadcast(this);
+    this->HasChanged = true;
 }
 
 {{/required}}

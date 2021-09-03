@@ -27,7 +27,39 @@ class {{dllapi}} U{{BPAPIPrefix}}{{classname}} : public UObject
     UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
     static U{{BPAPIPrefix}}{{classname}}* GetNew{{BPAPIPrefix}}{{classname}}Model();
 
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
+    void TriggerAllPropertiesChanged(const bool only_bindable_events = true, const bool skip_set_has_changed = true);
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAnyChangedDynamicDelegate, U{{BPAPIPrefix}}{{classname}} *, in_model);
+	DECLARE_MULTICAST_DELEGATE_OneParam(FOnAnyChangedDelegate, U{{BPAPIPrefix}}{{classname}} *);
+
+	UPROPERTY(BlueprintAssignable, Category={{BPAPIPrefix}}{{classname}})
+	FOnAnyChangedDynamicDelegate OnAnyChangedDynamicEvent;
+	FOnAnyChangedDelegate OnAnyChangedEvent;
+
+	UFUNCTION(BlueprintNativeEvent, Category=FPLAuthToken)
+	void OnAnyChanged();
+
+
 {{#vars}}
+{{#required}}
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDynamicDelegate, U{{BPAPIPrefix}}{{classname}} *, in_model, const {{datatype}} &, old_value, const {{datatype}} &, new_value);
+	DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate, U{{BPAPIPrefix}}{{classname}} *, const {{datatype}} &, const {{datatype}} &);
+
+	UFUNCTION(BlueprintNativeEvent, Category=FPLAuthToken)
+	void On{{name}}Changed(const {{datatype}} & old_Value, const {{datatype}} & new_value);
+{{/required}}
+{{^required}}
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDynamicDelegate, U{{BPAPIPrefix}}{{classname}} *, in_model,bool, was_set, bool, is_set, const {{datatype}} &, old_value, const {{datatype}} &, new_value);
+	DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate, U{{BPAPIPrefix}}{{classname}} *,bool, bool, const {{datatype}} &, const {{datatype}} &);
+
+	UFUNCTION(BlueprintNativeEvent, Category=FPLAuthToken)
+	void On{{name}}Changed(bool was_set, bool is_set, const {{datatype}} & old_Value, const {{datatype}} & new_value);
+{{/required}}
+	UPROPERTY(BlueprintAssignable, Category={{BPAPIPrefix}}{{classname}})
+	FOn{{name}}ChangedDynamicDelegate On{{name}}ChangedDynamicEvent;
+	FOn{{name}}ChangedDelegate On{{name}}ChangedEvent;
+
 	UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}})
 	void {{setter}}(const {{datatype}} & in_{{name}});
 
@@ -43,8 +75,13 @@ class {{dllapi}} U{{BPAPIPrefix}}{{classname}} : public UObject
 {{/required}}
 {{/vars}}
 
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}})
+    bool GetHasChanged();
+
 private:
     TSharedPtr<{{cppNamespace}}::{{classname}}> model;
+    UPROPERTY()
+    bool HasChanged = false;
 
 };
 {{/model}}
