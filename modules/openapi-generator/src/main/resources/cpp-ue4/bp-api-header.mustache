@@ -153,14 +153,31 @@ public:
     TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response> GetResponse() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
-    bool IsSuccessful() const;
+    bool IsHttpRequestSuccessful() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    bool IsHttpClientConnectionError() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
     int32 GetHttpResponseCode() const;
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
-    const FString & GetResponseString() const;
+    bool IsRestRequestSuccessful() const;
 
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    const bool RestResponseContentIsSet() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    const FString & GetRestResponseContent() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    const bool RestResponseDescriptionIsSet() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    const FString & GetRestResponseDescription() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintPure, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response)
+    bool IsRestContentFullyParsed() const;
 
 private:
 

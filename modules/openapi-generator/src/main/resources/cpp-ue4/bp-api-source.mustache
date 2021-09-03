@@ -71,7 +71,7 @@ TSharedPtr<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request> U{{
 void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::ExecuteRequest(U{{BPAPIPrefix}}{{classname}}* in_api)
 {
     auto response_functor = {{cppNamespace}}::{{classname}}::F{{operationIdCamelCase}}Delegate();
-    response_functor.BindLambda([this](const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response & response)
+    response_functor.BindLambda([this](const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response & response, FHttpRequestPtr httpRequest, FHttpResponsePtr htpResponse, bool httpRequestSucceeded)
     {
         this->OnResponseInternal(&response);
     });
@@ -79,7 +79,7 @@ void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::ExecuteReques
 }
 
 void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::OnResponseInternal(
-    const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response* in_response)
+    const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response * in_response)
 {
     auto response_wrapper = NewObject<U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response>();
     //the response object exists as a stack variable. It will not survive past this call's return.  So we clone it here (MakeShared not MakeSharable)
@@ -187,20 +187,22 @@ TSharedPtr<const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Respon
     return this->response;
 }
 
-bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsSuccessful() const
-{
-    return this->response.Get()->IsSuccessful();
-}
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsHttpRequestSuccessful() const { return this->response.Get()->IsHttpRequestSuccessful(); }
 
-int32 U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetHttpResponseCode() const
-{
-    return this->response.Get()->GetHttpResponseCode();
-}
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsHttpClientConnectionError() const  { return this->response.Get()->IsHttpClientConnectionError(); }
 
-const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetResponseString() const
-{
-    return this->response.Get()->GetResponseString();
-}
+int32 U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetHttpResponseCode() const  { return this->response.Get()->GetHttpResponseCode(); }
+
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsRestRequestSuccessful() const  { return this->response.Get()->IsRestRequestSuccessful(); }
+
+const bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseContent() const  { return this->response.Get()->RestResponseContentIsSet(); }
+const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseContent() const  { return this->response.Get()->GetRestResponseContent(); }
+
+const bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseDescription() const  { return this->response.Get()->RestResponseDescriptionIsSet(); }
+const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseDescription() const  { return this->response.Get()->GetRestResponseDescription(); }
+
+bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsRestContentFullyParsed() const  { return this->response.Get()->IsRestContentFullyParsed(); }
+
 
 {{#responses.0}}
 {{#isModel}}
