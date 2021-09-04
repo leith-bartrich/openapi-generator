@@ -195,11 +195,11 @@ int32 U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetHttpResp
 
 bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsRestRequestSuccessful() const  { return this->response.Get()->IsRestRequestSuccessful(); }
 
-const bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseContent() const  { return this->response.Get()->RestResponseContentIsSet(); }
-const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseContent() const  { return this->response.Get()->GetRestResponseContent(); }
+const bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::RestResponseContentIsSet() const  { return this->response.Get()->GetRestResponseContent().IsSet(); }
+const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseContent() const  { return this->response.Get()->GetRestResponseContent().GetValue(); }
 
-const bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseDescription() const  { return this->response.Get()->RestResponseDescriptionIsSet(); }
-const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseDescription() const  { return this->response.Get()->GetRestResponseDescription(); }
+const bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::RestResponseDescriptionIsSet() const  { return this->response.Get()->GetRestResponseDescription().IsSet(); }
+const FString & U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::GetRestResponseDescription() const  { return this->response.Get()->GetRestResponseDescription().GetValue(); }
 
 bool U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Response::IsRestContentFullyParsed() const  { return this->response.Get()->IsRestContentFullyParsed(); }
 
