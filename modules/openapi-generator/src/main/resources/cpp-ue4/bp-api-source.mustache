@@ -71,7 +71,7 @@ TSharedPtr<{{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Request> U{{
 void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::ExecuteRequest(U{{BPAPIPrefix}}{{classname}}* in_api)
 {
     auto response_functor = {{cppNamespace}}::{{classname}}::F{{operationIdCamelCase}}Delegate();
-    response_functor.BindLambda([this](const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response & response, FHttpRequestPtr httpRequest, FHttpResponsePtr htpResponse, bool httpRequestSucceeded)
+    response_functor.BindLambda([this](const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response & response)
     {
         this->OnResponseInternal(&response);
     });
