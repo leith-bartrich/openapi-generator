@@ -78,6 +78,11 @@ void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::ExecuteReques
     this->http_request = in_api->GetAPI()->{{operationIdCamelCase}}(*this->request,response_functor);
 }
 
+void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::CancelRequest()
+{
+    this->http_request->CancelRequest();
+}
+
 void U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request::OnResponseInternal(
     const {{cppNamespace}}::{{classname}}::{{operationIdCamelCase}}Response * in_response)
 {

@@ -83,6 +83,9 @@ public:
     FOnResponseDelegate OnResponseEvent;
 
     UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
+    void CancelRequest();
+
+    UFUNCTION(BlueprintCallable, Category={{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request)
     static U{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request * GetNew{{BPAPIPrefix}}{{classname}}{{operationIdCamelCase}}Request();
 
     {{#allParams}}
