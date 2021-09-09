@@ -96,6 +96,12 @@ public:
 	void SetRestContentFullyParsed(bool InRestContentFullyParsed) { RestContentFullyParsed = InRestContentFullyParsed; }
 	bool IsRestContentFullyParsed() const { return RestContentFullyParsed; }
 
+    [[deprecated("IsSuccessful is now disambiguated to be IsHttpRequestSuccessful and IsRestRequestSuccessful.  Currently returns IsHttpRequestSuccessful.")]]
+    bool IsSuccessful() const { return IsHttpRequestSuccessful(); }
+
+    [[deprecated("ResponseString is now disambiguated to GetRestResponseContent and GetRestResponseDescription.  Currently returns GetRestResponseContent.  This may not exactly replicate prior behavior.")]]
+    const FString& GetResponseString() const;
+
 private:
     //Unreal's underlying HTTP request.
 	FHttpRequestPtr HttpRequest;

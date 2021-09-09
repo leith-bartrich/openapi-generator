@@ -31,6 +31,11 @@ void Response::SetHttpResponseCode(EHttpResponseCodes::Type InHttpResponseCode)
 	SetRestRequestSuccessful(EHttpResponseCodes::IsOk(InHttpResponseCode));
 }
 
+const FString& Response::GetResponseString() const
+{
+   return RestResponseContent.Get("");
+}
+
 {{#cppNamespaceDeclarations}}
 }
 {{/cppNamespaceDeclarations}}
