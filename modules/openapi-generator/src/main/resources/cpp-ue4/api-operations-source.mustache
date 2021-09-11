@@ -294,7 +294,7 @@ void {{classname}}::{{operationIdCamelCase}}Response::SetHttpResponseCode(EHttpR
 	{{#isDefault}}
 	default:
 	{{/isDefault}}
-		SetRestResponseDescription(TEXT("{{message}}"));
+		RestResponseDescription = TEXT("{{message}}");
 		break;
 	{{/responses}}
 	}

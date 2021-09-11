@@ -25,15 +25,40 @@ HttpRetryParams::HttpRetryParams(const FRetryLimitCountSetting& InRetryLimitCoun
 {
 }
 
+bool Response::IsHttpClientConnectionError() const
+{
+    return HttpRequest->GetStatus() == EHttpRequestStatus::Failed_ConnectionError;
+}
+
 void Response::SetHttpResponseCode(EHttpResponseCodes::Type InHttpResponseCode)
 {
-	HttpResponseCode = InHttpResponseCode;
-	SetRestRequestSuccessful(EHttpResponseCodes::IsOk(InHttpResponseCode));
+}
+
+EHttpResponseCodes::Type Response::GetHttpResponseCode() const
+{
+    //there may not be a response provided by the http layer.
+    if (HttpResponse.IsValid()){
+        return (EHttpResponseCodes::Type)HttpResponse->GetResponseCode();
+    } else {
+        return EHttpResponseCodes::Unknown;
+    }
+}
+
+bool Response::IsRestRequestSuccessful() const
+{
+    return EHttpResponseCodes::IsOk(GetHttpResponseCode());
+    //currently we simply check the range of the resposne code.  However, there may be other criteria we should
+    //be considering here from a REST protocol and processing perspective.
 }
 
 const FString& Response::GetResponseString() const
 {
-   return RestResponseContent.Get("");
+    //this is an imperfect replication of the original logic.  Which, often overwrote the content with the description.
+    if (RestResponseDescription.IsSet()){
+        return RestResponseDescription.GetValue();
+    } else {
+        return RestResponseContent.Get("");
+    }
 }
 
 {{#cppNamespaceDeclarations}}

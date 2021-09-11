@@ -82,56 +82,59 @@ FHttpRequestRef {{classname}}::CreateHttpRequest(const Request& Request) const
 
 void {{classname}}::TryBuildResponse(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bHttpSucceeded, Response& InOutResponse) const
 {
-	InOutResponse.SetHttpRequest(HttpRequest); //publish the request
-	InOutResponse.SetHttpResponse(HttpResponse); //might be nullptr
-	InOutResponse.SetHttpRequestSuccessful(bHttpSucceeded); //false is going to be client Failed or Failed_ConnectionError
+    //this class is a 'friend' to the response and can use private fields directly, rather than
+    //local vars.
 
-	//A ConnectionError is a failure where the client knows the server never received the request.  Often safe to retry but only the application knows for sure.
-	InOutResponse.SetHttpClientConnectionError((HttpRequest->GetStatus() == EHttpRequestStatus::Failed_ConnectionError)); //publish knowledge of initial connection error
+	InOutResponse.HttpRequest = HttpRequest; //publish the request
+	InOutResponse.HttpResponse = HttpResponse; //might be nullptr
+	InOutResponse.HttpRequestSuccessful = bHttpSucceeded; //published\cached in the response because HttpResponse might be null.
 
 	//handle the potentially null response.
 	if (!HttpResponse.IsValid()){
 		return; //nothing else can be gleaned.
 	}
 
-	//the response code and raw content are retrieved.
-	InOutResponse.SetHttpResponseCode((EHttpResponseCodes::Type)HttpResponse->GetResponseCode()); //also sets RestResponseDescription based on Schema
-	FString ContentType = HttpResponse->GetContentType();
-	if (ContentType.IsEmpty())
+    //note: we should probably rename/rework SetHttpResponseCode to void TrySetRestResponseDescription()
+	InOutResponse.SetHttpResponseCode(InOutResponse.GetHttpResponseCode()); //Sets RestResponseDescription based on Schema
+
+    //content is retrieved for parsing.
+    InOutResponse.RestResponseContentType = HttpResponse->GetContentType();
+    if (InOutResponse.RestResponseContentType.IsEmpty())
 	{
 		return; // Nothing to parse.  Nothing else to glean.
 	}
-	FString Content;
-	Content = HttpResponse->GetContentAsString();
-	InOutResponse.SetRestResponseContent(Content);  //publish the raw string content, as we may not successfully parse it
+
+    //note: the platform specific implementation likely allocates the string once per call.
+    //we cache it in the response once and then use it both to parse, and to provide via public interface.
+	InOutResponse.RestResponseContent = HttpResponse->GetContentAsString();
 
 	//Strictly speaking, we should probably only try to parse the expected return based on the response code.
 	//And it should return different types based on the code's definition in the Schema.
 	//However we're doing a simpler thing here.  We try to parse an expected successful content type
 	//regardless of response code and provide it if we can.
 
-	if (ContentType.StartsWith(TEXT("application/json")) || ContentType.StartsWith("text/json"))
+	if (InOutResponse.RestResponseContentType.StartsWith(TEXT("application/json")) || InOutResponse.RestResponseContentType.StartsWith("text/json"))
 	{
 		TSharedPtr<FJsonValue> JsonValue;
-		auto Reader = TJsonReaderFactory<>::Create(Content);
+		auto Reader = TJsonReaderFactory<>::Create(InOutResponse.RestResponseContent.GetValue());
 
 		if (FJsonSerializer::Deserialize(Reader, JsonValue) && JsonValue.IsValid())
 		{
 			if (InOutResponse.FromJson(JsonValue)) //sets the parsed value as best it can
 			{
-				InOutResponse.SetRestContentFullyParsed(true); //informs if the parse was fully successful
+				InOutResponse.RestContentFullyParsed = true; //informs if the parse was fully successful
 				return; // nothing more to glean.
 			}
 		}
 		// note: we could try parsing some conventional alternative returns here such as 3.3 in:
 		// https://www.baeldung.com/rest-api-error-handling-best-practices
 	}
-	else if(ContentType.StartsWith(TEXT("text/plain")))
+	else if(InOutResponse.RestResponseContentType.StartsWith(TEXT("text/plain")))
 	{
-		return; // raw text was already published. nothing more to glean.
+		return; // nothing more to glean.
 	}
 	//note: we could parse other potential return types here.  Such as https://datatracker.ietf.org/doc/html/rfc7807 which
-	//would have content type: application/problem+json
+	//would have content type: application/problem+json.  Such a return might warrant flipping IsRestRequestSuccessful to false.
 
 }
 
