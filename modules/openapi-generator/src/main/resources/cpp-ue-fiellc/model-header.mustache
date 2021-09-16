@@ -83,22 +83,15 @@ private:
 
 };
 
-{{/model}}
-{{/models}}
+FString ToString(const U{{unrealModulePrefix}}{{classname}}& In_{{classname}});
+void WriteJsonValue(JsonWriter& Writer, U{{unrealModulePrefix}}{{classname}}* Value);
 
-
-{{#cppNamespaceDeclarations}}
-namespace {{this}}
+inline bool TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, U{{unrealModulePrefix}}{{classname}}* out_model)
 {
-{{/cppNamespaceDeclarations}}
-{{#models}}
-{{#model}}
-
-    FString ToString(const U{{unrealModulePrefix}}{{classname}}& In_{{classname}});
-    void WriteJsonValue(JsonWriter& Writer, U{{unrealModulePrefix}}{{classname}}* Value);
+    out_model = NewObject<U{{unrealModulePrefix}}{{classname}}>();
+    return out_model->FromJson(JsonValue);
+}
 
 {{/model}}
 {{/models}}
-{{#cppNamespaceDeclarations}}
-}
-{{/cppNamespaceDeclarations}}
+

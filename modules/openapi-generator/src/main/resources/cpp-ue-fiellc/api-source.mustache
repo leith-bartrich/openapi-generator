@@ -294,7 +294,7 @@ FString U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::ComputePath() co
 	{{/pathParams.0}}
 	{{#pathParams.0}}
 	TMap<FString, FStringFormatArg> PathParams;
-{{#pathParams}}    PathParams.Add(TEXT("{{baseName}}"), {{cppNamespace}}::ToStringFormatArg({{paramName}}));
+{{#pathParams}}    PathParams.Add(TEXT("{{baseName}}"), ToStringFormatArg({{paramName}}));
 {{/pathParams}}
 
 	FString Path = FString::Format(TEXT("{{{path}}}"), PathParams);
@@ -368,12 +368,12 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 
 		{{#bodyParams}}
 		{{#required}}
-            {{cppNamespace}}::WriteJsonValue(Writer, {{paramName}});
+            WriteJsonValue(Writer, {{paramName}});
 		{{/required}}
 		{{^required}}
 		if ({{paramName}}.IsSet())
 		{
-            {{cppNamespace}}::WriteJsonValue(Writer, {{paramName}}.GetValue());
+            WriteJsonValue(Writer, {{paramName}}.GetValue());
 		}
 		{{/required}}
 		{{/bodyParams}}
@@ -390,12 +390,12 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 		{{#formParams}}
 		{{#required}}
 		Writer->WriteIdentifierPrefix(TEXT("{{baseName}}"));
-		{{cppNamespace}}::WriteJsonValue(Writer, {{paramName}});
+		WriteJsonValue(Writer, {{paramName}});
 		{{/required}}
 		{{^required}}
 		if ({{paramName}}.IsSet()){
 			Writer->WriteIdentifierPrefix(TEXT("{{baseName}}"));
-            {{cppNamespace}}::WriteJsonValue(Writer, {{paramName}}.GetValue());
+            WriteJsonValue(Writer, {{paramName}}.GetValue());
 		}
 		{{/required}}
 		{{/formParams}}
@@ -423,7 +423,7 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 		FormData.AddBinaryPart(TEXT("{{baseName}}"), {{paramName}});
 		{{/isBinary}}
 		{{^isBinary}}
-		FormData.AddStringPart(TEXT("{{baseName}}"), *{{cppNamespace}}::ToUrlString({{paramName}}));
+		FormData.AddStringPart(TEXT("{{baseName}}"), *ToUrlString({{paramName}}));
 		{{/isBinary}}
 		{{/isFile}}
 		{{/required}}
@@ -438,7 +438,7 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 			FormData.AddBinaryPart(TEXT("{{baseName}}"), {{paramName}}.GetValue());
 			{{/isBinary}}
 			{{^isBinary}}
-			FormData.AddStringPart(TEXT("{{baseName}}"), *{{cppNamespace}}::ToUrlString({{paramName}}.GetValue()));
+			FormData.AddStringPart(TEXT("{{baseName}}"), *ToUrlString({{paramName}}.GetValue()));
 			{{/isBinary}}
 			{{/isFile}}
 		}
@@ -468,12 +468,12 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 		{{^isFile}}
 		{{^isContainer}}
 		{{#required}}
-		FormParams.Add(FString(TEXT("{{baseName}}=")) + {{cppNamespace}}::ToUrlString({{paramName}}));
+		FormParams.Add(FString(TEXT("{{baseName}}=")) + ToUrlString({{paramName}}));
 		{{/required}}
 		{{^required}}
 		if({{paramName}}.IsSet())
 		{
-			FormParams.Add(FString(TEXT("{{baseName}}=")) + {{cppNamespace}}::ToUrlString({{paramName}}.GetValue()));
+			FormParams.Add(FString(TEXT("{{baseName}}=")) + ToUrlString({{paramName}}.GetValue()));
 		}
 		{{/required}}
 		{{/isContainer}}
@@ -501,12 +501,12 @@ bool  U{{unrealModulePrefix}}{{operationIdCamelCase}}Response::FromJson(const TS
 {{#returnType}}
     {{#responses.0}}
         {{#isModel}}
-    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Content);
+    return TryGetJsonValue(JsonValue, Content);
         {{/isModel}}{{^isModel}}
             {{#isArray}}{{#items}}
-    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Content);
+    return TryGetJsonValue(JsonValue, Content);
             {{/items}}{{/isArray}}{{^isArray}}
-    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Content);
+    return TryGetJsonValue(JsonValue, Content);
             {{/isArray}}
         {{/isModel}}
     {{/responses.0}}

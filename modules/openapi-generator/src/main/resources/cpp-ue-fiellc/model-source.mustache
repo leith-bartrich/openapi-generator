@@ -82,12 +82,12 @@ void U{{unrealModulePrefix}}{{classname}}::WriteJson(JsonWriter& Writer) const
     Writer->WriteObjectStart();
     {{#vars}}
     {{#required}}
-    Writer->WriteIdentifierPrefix(TEXT("{{baseName}}")); {{cppNamespace}}::WriteJsonValue(Writer, {{name}});
+    Writer->WriteIdentifierPrefix(TEXT("{{baseName}}")); WriteJsonValue(Writer, {{name}});
     {{/required}}
     {{^required}}
     if ({{name}}.IsSet())
     {
-        Writer->WriteIdentifierPrefix(TEXT("{{baseName}}")); {{cppNamespace}}::WriteJsonValue(Writer, {{name}}.GetValue());
+        Writer->WriteIdentifierPrefix(TEXT("{{baseName}}")); WriteJsonValue(Writer, {{name}}.GetValue());
     }
     {{/required}}
     {{/vars}}
@@ -98,7 +98,7 @@ void U{{unrealModulePrefix}}{{classname}}::WriteJson(JsonWriter& Writer) const
 bool U{{unrealModulePrefix}}{{classname}}::FromJson(const TSharedPtr<FJsonValue>& JsonValue)
 {
     {{#isString}}
-    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Value);
+    return TryGetJsonValue(JsonValue, Value);
     {{/isString}}
     {{^isString}}
     const TSharedPtr<FJsonObject>* Object;
@@ -109,27 +109,16 @@ bool U{{unrealModulePrefix}}{{classname}}::FromJson(const TSharedPtr<FJsonValue>
 
     {{#vars}}
     {{#required}}
-    {{^isWriteOnly}}ParseSuccess &= {{/isWriteOnly}}{{cppNamespace}}::TryGetJsonValue(*Object, TEXT("{{baseName}}"), {{name}});
+    {{^isWriteOnly}}ParseSuccess &= {{/isWriteOnly}}TryGetJsonValue(*Object, TEXT("{{baseName}}"), {{name}});
     {{/required}}
     {{^required}}
-    ParseSuccess &= {{cppNamespace}}::TryGetJsonValue(*Object, TEXT("{{baseName}}"), {{name}});
+    ParseSuccess &= TryGetJsonValue(*Object, TEXT("{{baseName}}"), {{name}});
     {{/required}}
     {{/vars}}
 
     return ParseSuccess;
     {{/isString}}
 }
-
-{{/model}}
-{{/models}}
-
-
-{{#cppNamespaceDeclarations}}
-namespace {{this}}
-{
-{{/cppNamespaceDeclarations}}
-{{#models}}
-{{#model}}
 
     FString ToString(const U{{unrealModulePrefix}}{{classname}}& In_{{classname}})
     {
@@ -146,6 +135,3 @@ namespace {{this}}
 
 {{/model}}
 {{/models}}
-{{#cppNamespaceDeclarations}}
-}
-{{/cppNamespaceDeclarations}}
