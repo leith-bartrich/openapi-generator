@@ -1,0 +1,532 @@
+{{>licenseInfo}}
+#include "{{classname}}.h"
+
+#include "{{unrealModuleName}}Module.h"
+
+#include "HttpModule.h"
+#include "Serialization/JsonSerializer.h"
+#include "PlatformHttp.h"
+
+{{#imports}}#include "{{classname}}.h"
+{{/imports}}
+
+////http helpers
+
+
+HttpFileInput::HttpFileInput(const TCHAR* InFilePath)
+{
+	SetFilePath(InFilePath);
+}
+
+HttpFileInput::HttpFileInput(const FString& InFilePath)
+{
+	SetFilePath(InFilePath);
+}
+
+void HttpFileInput::SetFilePath(const TCHAR* InFilePath)
+{
+	FilePath = InFilePath;
+	if(ContentType.IsEmpty())
+	{
+		ContentType = FPlatformHttp::GetMimeType(InFilePath);
+	}
+}
+
+void HttpFileInput::SetFilePath(const FString& InFilePath)
+{
+	SetFilePath(*InFilePath);
+}
+
+void HttpFileInput::SetContentType(const TCHAR* InContentType)
+{
+	ContentType = InContentType;
+}
+
+FString HttpFileInput::GetFilename() const
+{
+	return FPaths::GetCleanFilename(FilePath);
+}
+
+const TCHAR* HttpMultipartFormData::Delimiter = TEXT("--");
+const TCHAR* HttpMultipartFormData::Newline = TEXT("\r\n");
+
+void HttpMultipartFormData::SetBoundary(const TCHAR* InBoundary)
+{
+	checkf(Boundary.IsEmpty(), TEXT("Boundary must be set before usage"));
+	Boundary = InBoundary;
+}
+
+const FString& HttpMultipartFormData::GetBoundary() const
+{
+	if (Boundary.IsEmpty())
+	{
+		// Generate a random boundary with enough entropy, should avoid occurrences of the boundary in the data.
+		// Since the boundary is generated at every request, in case of failure, retries should succeed.
+		Boundary = FGuid::NewGuid().ToString(EGuidFormats::Short);
+	}
+
+	return Boundary;
+}
+
+void HttpMultipartFormData::SetupHttpRequest(const FHttpRequestRef& HttpRequest)
+{
+	if(HttpRequest->GetVerb() != TEXT("POST"))
+	{
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Expected POST verb when using multipart form data"));
+	}
+
+	// Append final boundary
+	AppendString(Delimiter);
+	AppendString(*GetBoundary());
+	AppendString(Delimiter);
+
+	HttpRequest->SetHeader("Content-Type", FString::Printf(TEXT("multipart/form-data; boundary=%s"), *GetBoundary()));
+	HttpRequest->SetContent(FormData);
+}
+
+void HttpMultipartFormData::AddStringPart(const TCHAR* Name, const TCHAR* Data)
+{
+	// Add boundary
+	AppendString(Delimiter);
+	AppendString(*GetBoundary());
+	AppendString(Newline);
+
+	// Add header
+	AppendString(*FString::Printf(TEXT("Content-Disposition: form-data; name = \"%s\""), Name));
+	AppendString(Newline);
+	AppendString(*FString::Printf(TEXT("Content-Type: text/plain; charset=utf-8")));
+	AppendString(Newline);
+
+	// Add header to body splitter
+	AppendString(Newline);
+
+	// Add Data
+	AppendString(Data);
+	AppendString(Newline);
+}
+
+void HttpMultipartFormData::AddJsonPart(const TCHAR* Name, const FString& JsonString)
+{
+	// Add boundary
+	AppendString(Delimiter);
+	AppendString(*GetBoundary());
+	AppendString(Newline);
+
+	// Add header
+	AppendString(*FString::Printf(TEXT("Content-Disposition: form-data; name=\"%s\""), Name));
+	AppendString(Newline);
+	AppendString(*FString::Printf(TEXT("Content-Type: application/json; charset=utf-8")));
+	AppendString(Newline);
+
+	// Add header to body splitter
+	AppendString(Newline);
+
+	// Add Data
+	AppendString(*JsonString);
+	AppendString(Newline);
+}
+
+void HttpMultipartFormData::AddBinaryPart(const TCHAR* Name, const TArray<uint8>& ByteArray)
+{
+	// Add boundary
+	AppendString(Delimiter);
+	AppendString(*GetBoundary());
+	AppendString(Newline);
+
+	// Add header
+	AppendString(*FString::Printf(TEXT("Content-Disposition: form-data; name=\"%s\""), Name));
+	AppendString(Newline);
+	AppendString(*FString::Printf(TEXT("Content-Type: application/octet-stream")));
+	AppendString(Newline);
+
+	// Add header to body splitter
+	AppendString(Newline);
+
+	// Add Data
+	FormData.Append(ByteArray);
+	AppendString(Newline);
+}
+
+void HttpMultipartFormData::AddFilePart(const TCHAR* Name, const HttpFileInput& File)
+{
+	TArray<uint8> FileContents;
+	if (!FFileHelper::LoadFileToArray(FileContents, *File.GetFilePath()))
+	{
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Failed to load file (%s)"), *File.GetFilePath());
+		return;
+	}
+
+	// Add boundary
+	AppendString(Delimiter);
+	AppendString(*GetBoundary());
+	AppendString(Newline);
+
+	// Add header
+	AppendString(*FString::Printf(TEXT("Content-Disposition: form-data; name=\"%s\"; filename=\"%s\""), Name, *File.GetFilename()));
+	AppendString(Newline);
+	AppendString(*FString::Printf(TEXT("Content-Type: %s"), *File.GetContentType()));
+	AppendString(Newline);
+
+	// Add header to body splitter
+	AppendString(Newline);
+
+	// Add Data
+	FormData.Append(FileContents);
+	AppendString(Newline);
+}
+
+void HttpMultipartFormData::AppendString(const TCHAR* Str)
+{
+	FTCHARToUTF8 utf8Str(Str);
+	FormData.Append((uint8*)utf8Str.Get(), utf8Str.Length());
+}
+
+////API
+
+
+void U{{unrealModulePrefix}}{{classname}}::SetURL(const FString& InUrl)
+{
+    this->Url = InUrl;
+}
+
+void U{{unrealModulePrefix}}{{classname}}::AddHeaderParam(const FString& Key, const FString& Value)
+{
+    this->AdditionalHeaderParams.Add(Key, Value);
+}
+
+void U{{unrealModulePrefix}}{{classname}}::ClearHeaderParams( )
+{
+    this->AdditionalHeaderParams.Reset();
+}
+{{#operations}}
+{{#operation}}
+U{{unrealModulePrefix}}ActiveRequestHandle* U{{unrealModulePrefix}}{{classname}}::Do{{operationIdCamelCase}}RequestStatic(U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* In_Request, TFunction<void(U{{unrealModulePrefix}}{{operationIdCamelCase}}Response*)> on_response){
+    auto cancel_handle = NewObject<U{{unrealModulePrefix}}ActiveRequestHandle>();
+    auto httpRequest = FHttpModule::Get().CreateRequest();
+    httpRequest->SetURL(*(Url + In_Request->ComputePath()));
+
+    for(const auto& It : this->AdditionalHeaderParams)
+    {
+    httpRequest->SetHeader(It.Key, It.Value);
+    }
+
+    In_Request->SetupHttpRequest(httpRequest);
+    In_Request->HttpRequest = httpRequest;
+    httpRequest->OnProcessRequestComplete().BindLambda([this,In_Request,on_response](FHttpRequestPtr request, FHttpResponsePtr response, bool connectedSuccessfully)
+    {
+    this->Processing_Requests.Remove(In_Request);
+    auto restResponse = NewObject<U{{unrealModulePrefix}}{{operationIdCamelCase}}Response>();
+    restResponse->Request = In_Request;
+
+    auto requestStatus = request->GetStatus();
+    if (requestStatus == EHttpRequestStatus::Failed){
+    restResponse->HttpRequestFailed = true;
+    restResponse->HttpConnectionFailed = false;
+    on_response(restResponse);
+    return;
+    }
+
+    if (requestStatus == EHttpRequestStatus::Failed_ConnectionError){
+    restResponse->HttpRequestFailed = true;
+    restResponse->HttpConnectionFailed = true;
+    on_response(restResponse);
+    return;
+    }
+
+    restResponse->HttpResponseCode = response->GetResponseCode();
+    restResponse->RestSuccess = EHttpResponseCodes::IsOk(restResponse->HttpResponseCode);
+
+    switch ((int32)restResponse->HttpResponseCode)
+    {
+    {{#responses}}
+        case {{code}}:
+        {{#isDefault}}
+            default:
+        {{/isDefault}}
+        restResponse->RestResponseDescription = TEXT("{{message}}");
+        break;
+    {{/responses}}
+    }
+
+    restResponse->HttpContentType = response->GetContentType();
+
+    if (restResponse->HttpContentType.GetValue().IsEmpty()){
+    on_response(restResponse);
+    return;
+    } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("application/json")) || restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/json"))) {
+    restResponse->RestResponseContentString = response->GetContentAsString();
+    TSharedPtr<FJsonValue> JsonValue;
+    auto Reader = TJsonReaderFactory<>::Create(restResponse->RestResponseContentString.GetValue());
+    bool deserialized = FJsonSerializer::Deserialize(Reader, JsonValue);
+    bool validJSON = JsonValue.IsValid();
+    if (!(deserialized & validJSON)){
+    on_response(restResponse);
+    return;
+    }
+    bool parseSuccessful = restResponse->FromJson(JsonValue);
+    restResponse->RestParseSuccessful = parseSuccessful;
+    on_response(restResponse);
+    return;
+    } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/plain"))) {
+    restResponse->RestResponseContentString = response->GetContentAsString();
+    on_response(restResponse);
+    return;
+    }
+    });
+    httpRequest->ProcessRequest();
+    this->Processing_Requests.Add(In_Request);
+    cancel_handle->HttpRequest = httpRequest;
+    cancel_handle->Request = In_Request;
+    return cancel_handle;
+
+}
+
+
+U{{unrealModulePrefix}}ActiveRequestHandle* U{{unrealModulePrefix}}{{classname}}::Do{{operationIdCamelCase}}Request(U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* In_Request, const FOn{{unrealModulePrefix}}{{operationIdCamelCase}}ResponseDelegate& on_response)
+{
+    return this->Do{{operationIdCamelCase}}RequestStatic(In_Request, [on_response](U{{unrealModulePrefix}}{{operationIdCamelCase}}Response * response){on_response.ExecuteIfBound(response);});
+}
+
+FString U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::ComputePath() const
+{
+	{{^pathParams.0}}
+	FString Path(TEXT("{{{path}}}"));
+	{{/pathParams.0}}
+	{{#pathParams.0}}
+	TMap<FString, FStringFormatArg> PathParams;
+{{#pathParams}}    PathParams.Add(TEXT("{{baseName}}"), {{cppNamespace}}::ToStringFormatArg({{paramName}}));
+{{/pathParams}}
+
+	FString Path = FString::Format(TEXT("{{{path}}}"), PathParams);
+
+	{{/pathParams.0}}
+	{{#queryParams.0}}
+	TArray<FString> QueryParams;
+	{{#queryParams}}
+	{{#required}}
+	{{^collectionFormat}}
+	QueryParams.Add(FString(TEXT("{{baseName}}=")) + ToUrlString({{paramName}}));
+	{{/collectionFormat}}
+	{{#collectionFormat}}
+	QueryParams.Add(FString(TEXT("{{baseName}}=")) + CollectionToUrlString_{{collectionFormat}}({{paramName}}, TEXT("{{baseName}}")));
+	{{/collectionFormat}}
+	{{/required}}
+	{{^required}}
+	{{^collectionFormat}}
+	if({{paramName}}.IsSet())
+	{
+		QueryParams.Add(FString(TEXT("{{baseName}}=")) + ToUrlString({{paramName}}.GetValue()));
+	}
+	{{/collectionFormat}}
+	{{#collectionFormat}}
+	if({{paramName}}.IsSet())
+	{
+		QueryParams.Add(FString(TEXT("{{baseName}}=")) + CollectionToUrlString_{{collectionFormat}}({{paramName}}.GetValue(), TEXT("{{baseName}}")));
+	}
+	{{/collectionFormat}}
+	{{/required}}
+	{{/queryParams}}
+	Path += TCHAR('?');
+	Path += FString::Join(QueryParams, TEXT("&"));
+
+	{{/queryParams.0}}
+	return Path;
+}
+
+void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(const FHttpRequestRef& In_HttpRequest) const
+{
+	TArray<FString> Consumes;
+{{#consumes}}    Consumes.Add("{{{mediaType}}}");
+{{/consumes}}
+
+	//static const TArray<FString> Produces = { {{#produces}}TEXT("{{{mediaType}}}"){{^-last}}, {{/-last}}{{/produces}} };
+
+    In_HttpRequest->SetVerb(TEXT("{{httpMethod}}"));
+	{{#headerParams.0}}
+
+	// Header parameters
+	{{#headerParams}}
+	{{#required}}
+    In_HttpRequest->SetHeader(TEXT("{{baseName}}"), {{paramName}});
+	{{/required}}
+	{{^required}}
+	if ({{paramName}}.IsSet())
+	{
+    In_HttpRequest->SetHeader(TEXT("{{baseName}}"), {{paramName}}.GetValue());
+	}
+	{{/required}}
+	{{/headerParams}}
+	{{/headerParams.0}}
+
+	// Default to Json Body request
+	if (Consumes.Num() == 0 || Consumes.Contains(TEXT("application/json")))
+	{
+		{{#bodyParams.0}}
+		// Body parameters
+		FString JsonBody;
+		JsonWriter Writer = TJsonWriterFactory<>::Create(&JsonBody);
+
+		{{#bodyParams}}
+		{{#required}}
+            {{cppNamespace}}::WriteJsonValue(Writer, {{paramName}});
+		{{/required}}
+		{{^required}}
+		if ({{paramName}}.IsSet())
+		{
+            {{cppNamespace}}::WriteJsonValue(Writer, {{paramName}}.GetValue());
+		}
+		{{/required}}
+		{{/bodyParams}}
+		Writer->Close();
+
+        In_HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/json; charset=utf-8"));
+        In_HttpRequest->SetContentAsString(JsonBody);
+		{{/bodyParams.0}}
+		{{^bodyParams.0}}
+		// Form parameters
+		FString JsonBody;
+		JsonWriter Writer = TJsonWriterFactory<>::Create(&JsonBody);
+		Writer->WriteObjectStart();
+		{{#formParams}}
+		{{#required}}
+		Writer->WriteIdentifierPrefix(TEXT("{{baseName}}"));
+		{{cppNamespace}}::WriteJsonValue(Writer, {{paramName}});
+		{{/required}}
+		{{^required}}
+		if ({{paramName}}.IsSet()){
+			Writer->WriteIdentifierPrefix(TEXT("{{baseName}}"));
+            {{cppNamespace}}::WriteJsonValue(Writer, {{paramName}}.GetValue());
+		}
+		{{/required}}
+		{{/formParams}}
+		Writer->WriteObjectEnd();
+		Writer->Close();
+        In_HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/json; charset=utf-8"));
+        In_HttpRequest->SetContentAsString(JsonBody);
+		{{/bodyParams.0}}
+	}
+	else if (Consumes.Contains(TEXT("multipart/form-data")))
+	{
+		{{#formParams.0}}
+		HttpMultipartFormData FormData;
+		{{#formParams}}
+		{{#isContainer}}
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Form parameter ({{baseName}}) was ignored, Collections are not supported in multipart form"));
+		{{/isContainer}}
+		{{^isContainer}}
+		{{#required}}
+		{{#isFile}}
+		FormData.AddFilePart(TEXT("{{baseName}}"), {{paramName}});
+		{{/isFile}}
+		{{^isFile}}
+		{{#isBinary}}
+		FormData.AddBinaryPart(TEXT("{{baseName}}"), {{paramName}});
+		{{/isBinary}}
+		{{^isBinary}}
+		FormData.AddStringPart(TEXT("{{baseName}}"), *{{cppNamespace}}::ToUrlString({{paramName}}));
+		{{/isBinary}}
+		{{/isFile}}
+		{{/required}}
+		{{^required}}
+		if({{paramName}}.IsSet())
+		{
+			{{#isFile}}
+			FormData.AddFilePart(TEXT("{{baseName}}"), {{paramName}}.GetValue());
+			{{/isFile}}
+			{{^isFile}}
+			{{#isBinary}}
+			FormData.AddBinaryPart(TEXT("{{baseName}}"), {{paramName}}.GetValue());
+			{{/isBinary}}
+			{{^isBinary}}
+			FormData.AddStringPart(TEXT("{{baseName}}"), *{{cppNamespace}}::ToUrlString({{paramName}}.GetValue()));
+			{{/isBinary}}
+			{{/isFile}}
+		}
+		{{/required}}
+		{{/isContainer}}
+		{{/formParams}}
+
+		FormData.SetupHttpRequest(In_HttpRequest);
+		{{/formParams.0}}
+		{{#bodyParams.0}}
+		{{#bodyParams}}
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Body parameter ({{baseName}}) was ignored, not supported in multipart form"));
+		{{/bodyParams}}
+		{{/bodyParams.0}}
+	}
+	else if (Consumes.Contains(TEXT("application/x-www-form-urlencoded")))
+	{
+		{{#formParams.0}}
+		TArray<FString> FormParams;
+		{{#formParams}}
+		{{#isContainer}}
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Form parameter ({{baseName}}) was ignored, Collections are not supported in urlencoded requests"));
+		{{/isContainer}}
+		{{#isFile}}
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Form parameter ({{baseName}}) was ignored, Files are not supported in urlencoded requests"));
+		{{/isFile}}
+		{{^isFile}}
+		{{^isContainer}}
+		{{#required}}
+		FormParams.Add(FString(TEXT("{{baseName}}=")) + {{cppNamespace}}::ToUrlString({{paramName}}));
+		{{/required}}
+		{{^required}}
+		if({{paramName}}.IsSet())
+		{
+			FormParams.Add(FString(TEXT("{{baseName}}=")) + {{cppNamespace}}::ToUrlString({{paramName}}.GetValue()));
+		}
+		{{/required}}
+		{{/isContainer}}
+		{{/isFile}}
+		{{/formParams}}
+
+        In_HttpRequest->SetHeader(TEXT("Content-Type"), TEXT("application/x-www-form-urlencoded; charset=utf-8"));
+        In_HttpRequest->SetContentAsString(FString::Join(FormParams, TEXT("&")));
+		{{/formParams.0}}
+		{{#bodyParams.0}}
+		{{#bodyParams}}
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Body parameter ({{baseName}}) was ignored, not supported in urlencoded requests"));
+		{{/bodyParams}}
+		{{/bodyParams.0}}
+	}
+	else
+	{
+		UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Request ContentType not supported (%s)"), *FString::Join(Consumes, TEXT(",")));
+	}
+}
+
+
+bool  U{{unrealModulePrefix}}{{operationIdCamelCase}}Response::FromJson(const TSharedPtr<FJsonValue>& JsonValue)
+{
+{{#returnType}}
+    {{#responses.0}}
+        {{#isModel}}
+    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Content);
+        {{/isModel}}{{^isModel}}
+            {{#isArray}}{{#items}}
+    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Content);
+            {{/items}}{{/isArray}}{{^isArray}}
+    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Content);
+            {{/isArray}}
+        {{/isModel}}
+    {{/responses.0}}
+{{/returnType}}
+{{^returnType}}
+    return true;
+{{/returnType}}
+}
+
+
+
+{{/operation}}
+{{/operations}}
+
+{{#cppNamespaceDeclarations}}
+namespace {{this}}
+{
+{{/cppNamespaceDeclarations}}
+
+
+{{#cppNamespaceDeclarations}}
+}
+{{/cppNamespaceDeclarations}}

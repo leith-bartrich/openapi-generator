@@ -1,0 +1,4 @@
+generatorName: cpp-ue-fiellc
+outputDir: samples/client/petstore/cpp-ue-fiellc
+inputSpec: modules/openapi-generator/src/test/resources/2_0/petstore.yaml
+templateDir: modules/openapi-generator/src/main/resources/cpp-ue-fiellc

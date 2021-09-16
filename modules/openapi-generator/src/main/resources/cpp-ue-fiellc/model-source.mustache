@@ -1,0 +1,151 @@
+{{>licenseInfo}}
+#include "{{classname}}.h"
+
+#include "{{unrealModuleName}}Module.h"
+
+#include "Templates/SharedPointer.h"
+
+{{#models}}{{#model}}
+
+{{#hasEnums}}
+{{#vars}}{{#isEnum}}
+//utility functions for string conversion of E{{unrealModulePrefix}}{{classname}}{{{enumName}}}
+static FString E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+{
+{{#allowableValues}}
+    switch (EnumValue)
+    {
+    {{#enumVars}}
+        case E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::{{name}}:
+        return TEXT("{{{value}}}");
+    {{/enumVars}}
+    }
+{{/allowableValues}}
+    UE_LOG(Log{{unrealModuleName}}, Error, TEXT("Invalid E{{unrealModulePrefix}}{{classname}}::{{{enumName}}} Value (%d)"), (int)EnumValue);
+    return TEXT("");
+}
+
+static bool E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+{
+    static TMap<FString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}> StringToEnum = { {{#allowableValues}}{{#enumVars}}
+    { TEXT("{{{value}}}"), E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::{{name}} },{{/enumVars}}{{/allowableValues}} };
+
+    const auto Found = StringToEnum.Find(EnumAsString);
+    if(Found){
+        EnumValue = *Found;
+    }
+    return Found != nullptr;
+}
+
+inline bool FromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& Value)
+{
+    return E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumFromString(EnumAsString,Value);
+}
+
+inline FString ToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+{
+    return E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumToString(EnumValue);
+}
+
+inline FStringFormatArg ToStringFormatArg(const E{{unrealModulePrefix}}{{classname}}::{{{enumName}}}& Value)
+{
+    return FStringFormatArg(ToString(Value));
+}
+
+inline void WriteJsonValue(JsonWriter& Writer, const E{{unrealModulePrefix}}{{classname}}::{{{enumName}}}& Value)
+{
+    WriteJsonValue(Writer, ToString(Value));
+}
+
+inline bool TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, E{{unrealModulePrefix}}{{classname}}::{{{enumName}}}& Value)
+{
+    {{#allowableValues}}
+    FString TmpValue;
+    if (JsonValue->TryGetString(TmpValue))
+    {
+        if(FromString(TmpValue, Value))
+            return true;
+    }
+    {{/allowableValues}}
+    return false;
+}
+{{/isEnum}}{{/vars}}{{/hasEnums}}
+
+
+
+void U{{unrealModulePrefix}}{{classname}}::WriteJson(JsonWriter& Writer) const
+{
+    {{#isString}}
+    WriteJsonValue(Writer, Value);
+    {{/isString}}
+    {{^isString}}
+    Writer->WriteObjectStart();
+    {{#vars}}
+    {{#required}}
+    Writer->WriteIdentifierPrefix(TEXT("{{baseName}}")); {{cppNamespace}}::WriteJsonValue(Writer, {{name}});
+    {{/required}}
+    {{^required}}
+    if ({{name}}.IsSet())
+    {
+        Writer->WriteIdentifierPrefix(TEXT("{{baseName}}")); {{cppNamespace}}::WriteJsonValue(Writer, {{name}}.GetValue());
+    }
+    {{/required}}
+    {{/vars}}
+    Writer->WriteObjectEnd();
+    {{/isString}}
+}
+
+bool U{{unrealModulePrefix}}{{classname}}::FromJson(const TSharedPtr<FJsonValue>& JsonValue)
+{
+    {{#isString}}
+    return {{cppNamespace}}::TryGetJsonValue(JsonValue, Value);
+    {{/isString}}
+    {{^isString}}
+    const TSharedPtr<FJsonObject>* Object;
+    if (!JsonValue->TryGetObject(Object))
+        return false;
+
+    bool ParseSuccess = true;
+
+    {{#vars}}
+    {{#required}}
+    {{^isWriteOnly}}ParseSuccess &= {{/isWriteOnly}}{{cppNamespace}}::TryGetJsonValue(*Object, TEXT("{{baseName}}"), {{name}});
+    {{/required}}
+    {{^required}}
+    ParseSuccess &= {{cppNamespace}}::TryGetJsonValue(*Object, TEXT("{{baseName}}"), {{name}});
+    {{/required}}
+    {{/vars}}
+
+    return ParseSuccess;
+    {{/isString}}
+}
+
+{{/model}}
+{{/models}}
+
+
+{{#cppNamespaceDeclarations}}
+namespace {{this}}
+{
+{{/cppNamespaceDeclarations}}
+{{#models}}
+{{#model}}
+
+    FString ToString(const U{{unrealModulePrefix}}{{classname}}& In_{{classname}})
+    {
+        FString String;
+        JsonWriter Writer = TJsonWriterFactory<>::Create(&String);
+        In_{{classname}}.WriteJson(Writer);
+        Writer->Close();
+        return String;
+    }
+
+    void WriteJsonValue(JsonWriter& Writer, U{{unrealModulePrefix}}{{classname}}* Value){
+        Value->WriteJson(Writer);
+    }
+
+{{/model}}
+{{/models}}
+{{#cppNamespaceDeclarations}}
+}
+{{/cppNamespaceDeclarations}}

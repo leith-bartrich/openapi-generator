@@ -1,0 +1,104 @@
+{{>licenseInfo}}
+#pragma once
+
+{{#imports}}{{{import}}}
+{{/imports}}
+#include "CoreUObject.h"
+#include "Json/Public/Json.h"
+#include "Json/Public/Serialization/JsonWriter.h"
+#include "{{unrealModuleName}}Module.h"
+#include "Helpers.h"
+#include "{{classname}}.generated.h"
+
+{{#models}}
+{{#model}}
+
+/*
+* {{classname}} Model related types and methods.
+*
+* {{description}}
+*/
+
+// declare any enum types
+{{#vars}}{{#isEnum}}
+{{#allowableValues}}
+/* Enum for values of {{classname}}{{{enumName}}} */
+UENUM(BlueprintType)
+enum class E{{unrealModulePrefix}}{{classname}}{{{enumName}}}
+{
+{{#enumVars}}
+    {{name}},{{/enumVars}}
+};
+{{/allowableValues}}
+
+//utility functions for string conversion of {{classname}}{{{enumName}}}
+static FString EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue);
+static bool EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue);
+{{/isEnum}}{{/vars}}
+
+
+//Blueprint UObject for {{classname}}
+UCLASS(BlueprintType)
+class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public U{{unrealModulePrefix}}Model
+{
+
+    GENERATED_BODY()
+
+public:
+
+    bool FromJson(const TSharedPtr<FJsonValue>& JsonValue) override;
+    void WriteJson(JsonWriter& Writer) const override;
+
+{{#vars}}
+{{#isEnum}}
+{{#description}}    /* {{{.}}} */
+{{/description}}    {{^required}}TOptional<{{/required}}E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}}{{^required}}>{{/required}} {{name}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+
+    UFUNCTION(BlueprintCallable)
+    const E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} Get{{name}}() { return this->{{name}}{{^required}}.GetValue(){{/required}}; };
+
+    UFUNCTION(BlueprintCallable)
+    void Set{{name}}(E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} In_{{name}}) { this->{{name}} = In_{{name}}; };
+    {{^required}}
+
+    UFUNCTION(BlueprintCallable)
+    bool {{name}}IsSet() const {return this->{{name}}.IsSet();};{{/required}}
+{{/isEnum}}{{^isEnum}}
+{{#description}}    /* {{{.}}} */
+{{/description}}    {{^required}}TOptional<{{/required}}{{{datatype}}}{{^required}}>{{/required}} {{name}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+
+    UFUNCTION(BlueprintCallable)
+    const {{{datatype}}} Get{{name}}() const { return this->{{name}}{{^required}}.GetValue(){{/required}}; };
+
+    UFUNCTION(BlueprintCallable)
+    void Set{{name}}({{{datatype}}} In_{{name}}) { this->{{name}} = In_{{name}}; };
+    {{^required}}
+
+    UFUNCTION(BlueprintCallable)
+    bool {{name}}IsSet() const {return this->{{name}}.IsSet();};{{/required}}
+{{/isEnum}}
+{{/vars}}
+
+private:
+
+};
+
+{{/model}}
+{{/models}}
+
+
+{{#cppNamespaceDeclarations}}
+namespace {{this}}
+{
+{{/cppNamespaceDeclarations}}
+{{#models}}
+{{#model}}
+
+    FString ToString(const U{{unrealModulePrefix}}{{classname}}& In_{{classname}});
+    void WriteJsonValue(JsonWriter& Writer, U{{unrealModulePrefix}}{{classname}}* Value);
+
+{{/model}}
+{{/models}}
+{{#cppNamespaceDeclarations}}
+}
+{{/cppNamespaceDeclarations}}

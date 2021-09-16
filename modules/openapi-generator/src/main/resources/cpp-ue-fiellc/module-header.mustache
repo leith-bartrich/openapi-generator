@@ -1,0 +1,21 @@
+{{>licenseInfo}}
+#pragma once
+
+#include "Modules/ModuleInterface.h"
+#include "Modules/ModuleManager.h"
+#include "Logging/LogMacros.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Misc/Base64.h"
+#include "PlatformHttp.h"
+#include "Helpers.h"
+
+DECLARE_LOG_CATEGORY_EXTERN(Log{{unrealModuleName}}, Log, All);
+
+class {{dllapi}} {{unrealModuleName}}Module : public IModuleInterface
+{
+public:
+    void StartupModule() final;
+    void ShutdownModule() final;
+};
+

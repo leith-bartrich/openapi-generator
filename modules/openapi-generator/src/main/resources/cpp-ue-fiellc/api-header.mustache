@@ -1,0 +1,268 @@
+{{>licenseInfo}}
+#pragma once
+
+#include "CoreMinimal.h"
+#include "CoreUObject.h"
+#include "Interfaces/IHttpRequest.h"
+#include "Interfaces/IHttpResponse.h"
+#include "Serialization/JsonWriter.h"
+#include "Serialization/JsonSerializer.h"
+#include "Dom/JsonObject.h"
+#include "{{unrealModuleName}}Module.h"
+#include "Helpers.h"
+#include "{{classname}}.generated.h"
+
+//forward delcarations
+{{#operations}}{{#operation}}class U{{unrealModulePrefix}}{{operationIdCamelCase}}Request;
+{{/operation}}{{/operations}}
+{{#operations}}{{#operation}}class U{{unrealModulePrefix}}{{operationIdCamelCase}}Response;
+{{/operation}}{{/operations}}
+{{#imports}}class U{{unrealModulePrefix}}{{classname}};
+{{/imports}}
+class U{{unrealModulePrefix}}Request;
+
+
+//cancellable request handle
+UCLASS(BlueprintType)
+class {{dllapi}} U{{unrealModulePrefix}}ActiveRequestHandle : public UObject
+{
+    GENERATED_BODY()
+public:
+    UPROPERTY()
+    U{{unrealModulePrefix}}Request * Request;
+
+    FHttpRequestPtr HttpRequest;
+
+    UFUNCTION(BlueprintCallable)
+    void DoCancelRequest() { HttpRequest->CancelRequest(); };
+};
+
+//http helpers
+
+class {{dllapi}} HttpFileInput
+{
+public:
+	explicit HttpFileInput(const TCHAR* InFilePath);
+	explicit HttpFileInput(const FString& InFilePath);
+
+	// This will automatically set the content type if not already set
+    void SetFilePath(const TCHAR* InFilePath);
+	void SetFilePath(const FString& InFilePath);
+
+    // Optional if it can be deduced from the FilePath
+    void SetContentType(const TCHAR* ContentType);
+
+	HttpFileInput& operator=(const HttpFileInput& Other) = default;
+	HttpFileInput& operator=(const FString& InFilePath) { SetFilePath(*InFilePath); return*this; }
+	HttpFileInput& operator=(const TCHAR* InFilePath) { SetFilePath(InFilePath); return*this; }
+
+	const FString& GetFilePath() const { return FilePath; }
+	const FString& GetContentType() const { return ContentType; }
+
+	// Returns the filename with extension
+	FString GetFilename() const;
+
+private:
+    FString FilePath;
+    FString ContentType;
+};
+
+class HttpMultipartFormData
+{
+public:
+    void SetBoundary(const TCHAR* InBoundary);
+    void SetupHttpRequest(const FHttpRequestRef& HttpRequest);
+
+    void AddStringPart(const TCHAR* Name, const TCHAR* Data);
+    void AddJsonPart(const TCHAR* Name, const FString& JsonString);
+    void AddBinaryPart(const TCHAR* Name, const TArray<uint8>& ByteArray);
+    void AddFilePart(const TCHAR* Name, const HttpFileInput& File);
+
+private:
+    void AppendString(const TCHAR* Str);
+    const FString& GetBoundary() const;
+
+    mutable FString Boundary;
+    TArray<uint8> FormData;
+
+    static const TCHAR* Delimiter;
+    static const TCHAR* Newline;
+};
+
+
+UCLASS(BlueprintType)
+class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public UObject
+{
+    GENERATED_BODY()
+public:
+
+    //Sets the base URL for Endpoints.
+    UFUNCTION(BlueprintCallable)
+    void SetURL(const FString& Url);
+
+    //Adds global header params to all requests made from this {{classname}} instance.
+    UFUNCTION(BlueprintCallable)
+    void AddHeaderParam(const FString& Key, const FString& Value);
+
+    UFUNCTION(BlueprintCallable)
+    void ClearHeaderParams();
+
+    /* Requests */
+
+    {{#operations}}{{#operation}}{{#description}}/* {{{.}}} */{{/description}}
+
+    DECLARE_DYNAMIC_DELEGATE_OneParam(FOn{{unrealModulePrefix}}{{operationIdCamelCase}}ResponseDelegate,U{{unrealModulePrefix}}{{operationIdCamelCase}}Response*,In_Response);
+
+    UFUNCTION(BlueprintCallable)
+    U{{unrealModulePrefix}}ActiveRequestHandle* Do{{operationIdCamelCase}}Request(U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* In_Request, const FOn{{unrealModulePrefix}}{{operationIdCamelCase}}ResponseDelegate& on_response);
+
+    U{{unrealModulePrefix}}ActiveRequestHandle* Do{{operationIdCamelCase}}RequestStatic(U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* In_Request, TFunction<void(U{{unrealModulePrefix}}{{operationIdCamelCase}}Response*)> on_response);
+
+    {{/operation}}{{/operations}}
+
+private:
+    UPROPERTY()
+    FString Url;
+
+    UPROPERTY()
+    TMap<FString,FString> AdditionalHeaderParams;
+
+    UPROPERTY()
+    TArray<U{{unrealModulePrefix}}{{operationIdCamelCase}}Request*> Processing_Requests;
+};
+
+UCLASS(BlueprintType, Abstract)
+class {{dllapi}} U{{unrealModulePrefix}}{{operationIdCamelCase}}Request : public UObject
+{
+    GENERATED_BODY()
+};
+
+
+{{#operations}}{{#operation}}
+/*
+ * Operation {{operationIdCamelCase}}
+ */
+
+UCLASS(BlueprintType)
+class {{dllapi}} U{{unrealModulePrefix}}{{operationIdCamelCase}}Request : public U{{unrealModulePrefix}}Request
+{
+
+    GENERATED_BODY()
+
+public:
+
+    U{{unrealModulePrefix}}ActiveRequestHandle* DoExecuteStatic(U{{unrealModulePrefix}}{{classname}} * in_api, TFunction<void(U{{unrealModulePrefix}}{{operationIdCamelCase}}Response*)> on_response ) { return in_api->Do{{operationIdCamelCase}}RequestStatic(this, on_response); };
+
+    void SetupHttpRequest(const FHttpRequestRef& In_HttpRequest) const;
+
+    FString ComputePath() const;
+
+    FHttpRequestPtr HttpRequest;
+
+{{#allParams}}
+{{#isEnum}}
+
+{{#allowableValues}}
+	enum class {{{enumName}}}
+	{
+		{{#enumVars}}
+		{{name}},
+		{{/enumVars}}
+  	};
+{{/allowableValues}}
+
+    UFUNCTION()
+	static FString EnumToString(const {{{enumName}}}& EnumValue);
+    UFUNCTION()
+	static bool EnumFromString(const FString& EnumAsString, {{{enumName}}}& EnumValue);
+    {{#description}}/* {{{.}}} */
+    {{/description}}{{^required}}TOptional<{{/required}}{{{datatypeWithEnum}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    UFUNCTION(BlueprintCallable)
+    void Set{{paramName}}({{{datatypeWithEnum}}} In_{{paramName}}) { this->{{paramName}} = In_{{paramName}}; };
+{{/isEnum}}{{^isEnum}}
+{{#isModel}}
+    {{#description}}/* {{{.}}} */
+    {{/description}}{{^required}}TOptional<{{/required}}U{{unrealModulePrefix}}{{{dataType}}}*{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    UFUNCTION(BlueprintCallable)
+    void Set{{paramName}}(U{{unrealModulePrefix}}{{{dataType}}}* In_{{paramName}}) { this->{{paramName}} = In_{{paramName}}; };
+{{/isModel}}{{^isModel}}
+    {{#description}}/* {{{.}}} */
+    {{/description}}{{^required}}TOptional<{{/required}}{{{dataType}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    UFUNCTION(BlueprintCallable)
+    void Set{{paramName}}({{{dataType}}} In_{{paramName}}) { this->{{paramName}} = In_{{paramName}}; };
+{{/isModel}}
+{{/isEnum}}
+{{/allParams}}
+};
+
+
+UCLASS(BlueprintType)
+class {{dllapi}} U{{unrealModulePrefix}}{{operationIdCamelCase}}Response : public UObject
+{
+
+GENERATED_BODY()
+
+public:
+
+    UPROPERTY()
+    bool HttpRequestFailed = false;
+
+    UPROPERTY()
+    bool HttpConnectionFailed = false;
+
+    UPROPERTY()
+    bool RestSuccess = false;
+
+    UPROPERTY()
+    int32 HttpResponseCode = 0;
+
+    TOptional<FString> RestResponseDescription;
+    UFUNCTION(BlueprintCallable)
+    bool RestResponseDescriptionIsSet() { return RestResponseDescription.IsSet(); };
+    UFUNCTION(BlueprintCallable)
+    FString& GetRestResponseDescription() { return RestResponseDescription.GetValue(); };
+
+    TOptional<FString> HttpContentType;
+    UFUNCTION(BlueprintCallable)
+    bool HttpContentTypeIsSet() { return HttpContentType.IsSet(); };
+    UFUNCTION(BlueprintCallable)
+    FString& GetHttpContentType() { return HttpContentType.GetValue(); };
+
+    TOptional<FString> RestResponseContentString;
+    UFUNCTION(BlueprintCallable)
+    bool RestResponseContentStringIsSet() { return RestResponseContentString.IsSet(); };
+    UFUNCTION(BlueprintCallable)
+    FString& GetRestResponseContentString() { return RestResponseContentString.GetValue(); };
+
+    UPROPERTY()
+    bool RestParseSuccessful = false;
+
+    UPROPERTY()
+    U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* Request;
+
+    bool FromJson(const TSharedPtr<FJsonValue>& JsonValue);
+
+{{#returnType}}{{#responses.0}}
+    {{#isModel}}
+        UPROPERTY()
+        U{{unrealModulePrefix}}{{dataType}}* Content;
+    {{/isModel}}{{^isModel}}
+        {{#isArray}}{{#items}}
+            {{#isModel}}
+        UPROPERTY()
+        TArray<U{{unrealModulePrefix}}{{dataType}}*> Content;
+            {{/isModel}}{{^isModel}}
+        UPROPERTY()
+        {{dataType}} Content;
+            {{/isModel}}
+        {{/items}}{{/isArray}}{{^isArray}}
+        UPROPERTY()
+        {{dataType}} Content;
+        {{/isArray}}
+    {{/isModel}}
+{{/responses.0}}{{/returnType}}
+
+
+};
+
+{{/operation}}{{/operations}}
