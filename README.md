@@ -1,3 +1,17 @@
+<h1 align="center">FORKED OpenAPI Generator</h1>
+<h1 align="center">CPP-UE-FIELLC</h1>
+This forked version of the OpenAPI Generator adds a new generator, cpp-ue-fiellc.
+
+This new generator is an alternative to the cpp-ue4 generator.  I contributed some bug fixes to that generator.  However,
+I decided to fork the generator rathern than continue to push for change to the existing (and very broken) version.
+
+The new generator is currenlty in development.  However, it is meant to be genreal purpose, despite its name.  Were this
+generator ever to be merged back into mainline development it would need a rename.  Also, the changes to the README would need to be removed.
+
+The main branch is cpp-ue4-fiellc.  I will rebase from the official OpenAPI repository as often as I can.
+
+The original README continues below:
+
 <h1 align="center">OpenAPI Generator</h1>
 
 
