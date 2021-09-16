@@ -49,37 +49,132 @@ public:
     bool FromJson(const TSharedPtr<FJsonValue>& JsonValue) override;
     void WriteJson(JsonWriter& Writer) const override;
 
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,has_changed);
+    DECLARE_MULTICAST_DELEGATE_TwoParams(FOnChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool);
+
+    UPROPERTY(BlueprintAssignable)
+    FOnChangedDelegate OnChangedEvent;
+    FOnChangedStaticDelegate OnChangedStaticEvent;
+
+    UFUNCTION(BlueprintCallable)
+    bool GetHasChanged() { return this->HasChanged; };
+
+    UFUNCTION()
+    void SetHasChanged(bool has_changed) {
+        if (this->HasChanged != has_changed){
+            this->HasChanged = has_changed;
+            this->OnChangedEvent.Broadcast(this,has_changed);
+            this->OnChangedStaticEvent.Broadcast(this,has_changed);
+        }
+    }
+
+    UFUNCTION(BlueprintCallable)
+    void TriggerAllChangedEvents(bool skipHasChangedEvent = false){
+    {{#vars}}
+        {{#required}}
+        auto {{name}}_val = this->Get{{name}}();
+        this->On{{name}}ChangedStaticEvent.Broadcast(this,{{name}}_val,{{name}}_val);
+        this->On{{name}}ChangedEvent.Broadcast(this,{{name}}_val,{{name}}_val);
+        {{/required}}{{^required}}
+        bool {{name}}_is_set = this->{{name}}IsSet();
+        auto {{name}}_val = this->Get{{name}}();
+        this->On{{name}}ChangedStaticEvent.Broadcast(this,{{name}}_is_set,{{name}}_val,{{name}}_is_set,{{name}}_val);
+        this->On{{name}}ChangedEvent.Broadcast(this,{{name}}_is_set,{{name}}_val,{{name}}_is_set,{{name}}_val);
+        {{/required}}
+    {{/vars}}
+        if(!skipHasChangedEvent){
+            bool has_changed = this->HasChanged;
+            this->OnChangedEvent.Broadcast(this,has_changed);
+            this->OnChangedStaticEvent.Broadcast(this,has_changed);
+        }
+    }
+
+
+    /* Vars */
 {{#vars}}
-{{#isEnum}}
-{{#description}}    /* {{{.}}} */
-{{/description}}    {{^required}}TOptional<{{/required}}E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}}{{^required}}>{{/required}} {{name}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    /* Var: {{name}} */
+{{#description}}    /* {{{.}}} */{{/description}}
 
-    UFUNCTION(BlueprintCallable)
-    const E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} Get{{name}}() { return this->{{name}}{{^required}}.GetValue(){{/required}}; };
+    //field
+    {{#isEnum}}
+    {{^required}}TOptional<{{/required}}E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}}{{^required}}>{{/required}} {{name}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    {{/isEnum}}{{^isEnum}}
+    {{^required}}TOptional<{{/required}}{{{datatype}}}{{^required}}>{{/required}} {{name}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    {{/isEnum}}
 
-    UFUNCTION(BlueprintCallable)
-    void Set{{name}}(E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} In_{{name}}) { this->{{name}} = In_{{name}}; };
+    //delegates
+    {{#required}}
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,const {{{datatype}}}&,from,const {{{datatype}}}&,to);
+    DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,const {{{datatype}}}&,const {{{datatype}}}&);
+    {{/required}}{{^required}}
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set,const {{{datatype}}}&,from,bool,is_set,const {{{datatype}}}&,to);
+    DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, const {{{datatype}}}&,bool ,const {{{datatype}}}&);
+    {{/required}}
+
+    //events
+    UPROPERTY(BlueprintAssignable)
+    FOn{{name}}ChangedDelegate On{{name}}ChangedEvent;
+    FOn{{name}}ChangedStaticDelegate On{{name}}ChangedStaticEvent;
+
+    //isSet
     {{^required}}
-
     UFUNCTION(BlueprintCallable)
-    bool {{name}}IsSet() const {return this->{{name}}.IsSet();};{{/required}}
-{{/isEnum}}{{^isEnum}}
-{{#description}}    /* {{{.}}} */
-{{/description}}    {{^required}}TOptional<{{/required}}{{{datatype}}}{{^required}}>{{/required}} {{name}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    bool {{name}}IsSet() const {return this->{{name}}.IsSet();};
+    {{/required}}
 
+    //getter
+    {{#isEnum}}
     UFUNCTION(BlueprintCallable)
-    const {{{datatype}}} Get{{name}}() const { return this->{{name}}{{^required}}.GetValue(){{/required}}; };
+    const E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} Get{{name}}() const {
+            return this->{{name}}{{^required}}.Get({{#defaultValue}}{{{.}}}{{/defaultValue}}){{/required}};
+    };
+    {{/isEnum}}{{^isEnum}}
+    UFUNCTION(BlueprintCallable)
+    const {{{datatype}}} Get{{name}}() const {
+        {{#required}}
+        return this->{{name}};
+        {{/required}}{{^required}}
+        if (this->{{name}}.IsSet()){
+                return this->{{name}}.GetValue();
+        } else {
+            //dirty trick to get default value
+            {{{datatype}}} temp[1] = {};
+            {{{datatype}}} TmpValue = temp[0];
+            return this->{{name}}.Get(TmpValue);
+        }
+        {{/required}}
+    };
+    {{/isEnum}}
 
+    //setter
     UFUNCTION(BlueprintCallable)
-    void Set{{name}}({{{datatype}}} In_{{name}}) { this->{{name}} = In_{{name}}; };
-    {{^required}}
+    {{#isEnum}}
+    void Set{{name}}(E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} In_{{name}}) {
+    {{/isEnum}}{{^isEnum}}
+    void Set{{name}}({{{datatype}}} In_{{name}}) {
+    {{/isEnum}}
+        {{^required}}bool was_set = this->{{name}}.IsSet(); {{/required}}
+        auto old_val = this->Get{{name}}();
+        if ( {{^required}} was_set && {{/required}} (old_val == In_{{name}})){
+            //don't do anything if the value isn't actually different.
+            return;
+        }
+        this->{{name}} = In_{{name}};
+        {{#required}}
+        this->On{{name}}ChangedStaticEvent.Broadcast(this,old_val,In_{{name}});
+        this->On{{name}}ChangedEvent.Broadcast(this,old_val,In_{{name}});
+        {{/required}}{{^required}}
+        this->On{{name}}ChangedStaticEvent.Broadcast(this,was_set,old_val,true,In_{{name}});
+        this->On{{name}}ChangedEvent.Broadcast(this,was_set,old_val,true,In_{{name}});
+        {{/required}}
+        this->SetHasChanged(true);
+    };
 
-    UFUNCTION(BlueprintCallable)
-    bool {{name}}IsSet() const {return this->{{name}}.IsSet();};{{/required}}
-{{/isEnum}}
 {{/vars}}
 
 private:
+    UPROPERTY()
+    bool HasChanged = false;
 
 };
 

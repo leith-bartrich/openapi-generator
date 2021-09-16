@@ -116,6 +116,8 @@ bool U{{unrealModulePrefix}}{{classname}}::FromJson(const TSharedPtr<FJsonValue>
     {{/required}}
     {{/vars}}
 
+    this->SetHasChanged(false);
+
     return ParseSuccess;
     {{/isString}}
 }
