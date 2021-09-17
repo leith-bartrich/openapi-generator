@@ -261,6 +261,13 @@ inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const TArra
     Writer->WriteValue(ToString(Value));
 }
 */
+
+inline void FPLWriteJsonValue(JsonWriter& Writer, const bool& Value)
+{
+    Writer->WriteValue(Value);
+}
+
+
 inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const FDateTime& Value)
 {
     Writer->WriteValue(Value.ToIso8601());

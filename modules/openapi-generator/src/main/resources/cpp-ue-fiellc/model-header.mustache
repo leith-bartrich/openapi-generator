@@ -107,13 +107,33 @@ public:
     {{/isEnum}}
 
     //delegates
-    {{#required}}
+    {{#isModel}}
+        {{#required}}
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,{{{datatype}}}*,from,{{{datatype}}}*,to);
+    DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,{{{datatype}}}*,{{{datatype}}}*);
+        {{/required}}{{^required}}
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set,{{{datatype}}}*,from,bool,is_set,{{{datatype}}}*,to);
+    DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, {{{datatype}}}*,bool ,{{{datatype}}}*);
+        {{/required}}
+    {{/isModel}}{{^isModel}}
+        {{#isString}}
+            {{#required}}
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,const {{{datatype}}}&,from,const {{{datatype}}}&,to);
     DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,const {{{datatype}}}&,const {{{datatype}}}&);
-    {{/required}}{{^required}}
+            {{/required}}{{^required}}
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set,const {{{datatype}}}&,from,bool,is_set,const {{{datatype}}}&,to);
     DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, const {{{datatype}}}&,bool ,const {{{datatype}}}&);
-    {{/required}}
+            {{/required}}
+        {{/isString}}{{^isString}}
+            {{#required}}
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,{{{datatype}}},from,{{{datatype}}},to);
+    DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*, {{{datatype}}}, {{{datatype}}});
+            {{/required}}{{^required}}
+    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set, {{{datatype}}},from,bool,is_set, {{{datatype}}},to);
+    DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, {{{datatype}}},bool, {{{datatype}}});
+            {{/required}}
+        {{/isString}}
+    {{/isModel}}
 
     //events
     UPROPERTY(BlueprintAssignable,Category={{unrealModulePrefix}}{{classname}})
