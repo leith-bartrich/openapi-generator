@@ -36,8 +36,7 @@ static FString EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumNam
 static bool EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue);
 {{/isEnum}}{{/vars}}
 
-
-//Blueprint UObject for {{classname}}
+/* {{classname}} Model.  {{description}} */
 UCLASS(BlueprintType,Category={{unrealModulePrefix}}{{classname}})
 class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public U{{unrealModulePrefix}}Model
 {
@@ -46,7 +45,7 @@ class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public U{{unrealModulePr
 
 public:
 
-    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}})
+    UFUNCTION(BlueprintCallable,Category="{{unrealModulePrefix}}|Models|{{unrealModulePrefix}}{{classname}}")
     static U{{unrealModulePrefix}}{{classname}}* CreateNew{{unrealModulePrefix}}{{classname}}() { return NewObject<U{{unrealModulePrefix}}{{classname}}>(); };
 
     bool FromJson(const TSharedPtr<FJsonValue>& JsonValue) override;
@@ -59,6 +58,7 @@ public:
     FOnChangedDelegate OnChangedEvent;
     FOnChangedStaticDelegate OnChangedStaticEvent;
 
+    /* Whether the given model has changed since it was created, or deserialized from JSON. */
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     bool GetHasChanged() { return this->HasChanged; };
 
@@ -71,6 +71,7 @@ public:
         }
     }
 
+    /* Triggers the event broadcasts for everything with their current values.  Useful to initialize bound logic after binding. */
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}})
     void TriggerAllChangedEvents(bool skipHasChangedEvent = false){
     {{#vars}}
@@ -121,11 +122,13 @@ public:
 
     //isSet
     {{^required}}
+    /* Check if optional value of {{name}} has been set.{{#description}}  {{{.}}}{{/description}} */
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     bool {{name}}IsSet() const {return this->{{name}}.IsSet();};
     {{/required}}
 
     //getter
+    /* Get value of {{name}}.{{#description}}  {{{.}}}{{/description}} */
     {{#isEnum}}
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     const E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} Get{{name}}() const {
@@ -150,6 +153,7 @@ public:
     {{/isEnum}}
 
     //setter
+    /* Set value of {{name}}.{{#description}}  {{{.}}}{{/description}} */
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}})
     {{#isEnum}}
     void Set{{name}}(E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} In_{{name}}) {

@@ -35,11 +35,13 @@ class {{dllapi}} U{{unrealModulePrefix}}ActiveRequestHandle : public UObject
 {
     GENERATED_BODY()
 public:
+    //The request that we can cancel.
     UPROPERTY(BlueprintReadOnly, Category={{unrealModulePrefix}}ActiveRequestHandle)
     U{{unrealModulePrefix}}Request * Request;
 
     FHttpRequestPtr HttpRequest;
 
+    //Cancel the request.  Will trigger a response with a request failure.
     UFUNCTION(BlueprintCallable, Category={{unrealModulePrefix}}ActiveRequestHandle)
     void DoCancelRequest() { HttpRequest->CancelRequest(); };
 };
@@ -96,14 +98,14 @@ private:
     static const TCHAR* Newline;
 };
 
-
+/* A REST API interface for {{classname}} */
 UCLASS(BlueprintType, Category={{unrealModulePrefix}}{{classname}})
 class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public UObject
 {
     GENERATED_BODY()
 public:
 
-    UFUNCTION(BlueprintCallable, Category={{unrealModulePrefix}}{{classname}})
+    UFUNCTION(BlueprintCallable, Category="{{unrealModulePrefix}}|APIs|{{unrealModulePrefix}}{{classname}}")
     static U{{unrealModulePrefix}}{{classname}}* CreateNew{{unrealModulePrefix}}{{classname}}() { return NewObject<U{{unrealModulePrefix}}{{classname}}>(); };
 
     //Sets the base URL for Endpoints.
@@ -172,7 +174,7 @@ class {{dllapi}} U{{unrealModulePrefix}}{{operationIdCamelCase}}Request : public
 
 public:
 
-    UFUNCTION(BlueprintCallable, Category = {{unrealModulePrefix}}{{operationIdCamelCase}}Request)
+    UFUNCTION(BlueprintCallable, Category ="{{unrealModulePrefix}}|Requests|{{unrealModulePrefix}}{{operationIdCamelCase}}Request")
     static U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* CreateNew{{unrealModulePrefix}}{{operationIdCamelCase}}Request() { return NewObject<U{{unrealModulePrefix}}{{operationIdCamelCase}}Request>(); };
 
     U{{unrealModulePrefix}}ActiveRequestHandle* DoExecuteStatic(U{{unrealModulePrefix}}{{classname}} * in_api, TFunction<void(U{{unrealModulePrefix}}{{operationIdCamelCase}}Response*)> on_response ) { return in_api->Do{{operationIdCamelCase}}RequestStatic(this, on_response); };
@@ -199,19 +201,19 @@ public:
 	static FString EnumToString(const {{{enumName}}}& EnumValue);
     UFUNCTION(Category={{unrealModulePrefix}}{{operationIdCamelCase}}Request)
 	static bool EnumFromString(const FString& EnumAsString, {{{enumName}}}& EnumValue);
-    {{#description}}/* {{{.}}} */
-    {{/description}}{{^required}}TOptional<{{/required}}{{{datatypeWithEnum}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    {{^required}}TOptional<{{/required}}{{{datatypeWithEnum}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    /* Set {{paramName}} Value.{{#description}}  {{{.}}}{{/description}} */
     UFUNCTION(BlueprintCallable, Category={{unrealModulePrefix}}{{operationIdCamelCase}}Request)
     void Set{{paramName}}({{{datatypeWithEnum}}} In_{{paramName}}) { this->{{paramName}} = In_{{paramName}}; };
 {{/isEnum}}{{^isEnum}}
 {{#isModel}}
-    {{#description}}/* {{{.}}} */
-    {{/description}}{{^required}}TOptional<{{/required}}U{{unrealModulePrefix}}{{{dataType}}}*{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    {{^required}}TOptional<{{/required}}U{{unrealModulePrefix}}{{{dataType}}}*{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    /* Set {{paramName}} Value.{{#description}}  {{{.}}}{{/description}} */
     UFUNCTION(BlueprintCallable, Category={{unrealModulePrefix}}{{operationIdCamelCase}}Request)
     void Set{{paramName}}(U{{unrealModulePrefix}}{{{dataType}}}* In_{{paramName}}) { this->{{paramName}} = In_{{paramName}}; };
 {{/isModel}}{{^isModel}}
-    {{#description}}/* {{{.}}} */
-    {{/description}}{{^required}}TOptional<{{/required}}{{{dataType}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    {{^required}}TOptional<{{/required}}{{{dataType}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
+    /* Set {{paramName}} Value.{{#description}}  {{{.}}}{{/description}} */
     UFUNCTION(BlueprintCallable, Category={{unrealModulePrefix}}{{operationIdCamelCase}}Request)
     void Set{{paramName}}({{{dataType}}} In_{{paramName}}) { this->{{paramName}} = In_{{paramName}}; };
 {{/isModel}}
@@ -228,59 +230,75 @@ GENERATED_BODY()
 
 public:
 
+    //Whether the Http request failed, as resported by the underlying HTTP platform.
     UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
     bool HttpRequestFailed = false;
 
+    //Whether the connection itself failed before any data was sent down the line.
     UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
     bool HttpConnectionFailed = false;
 
+    //Whether the REST request was succesful as per REST protocol standards.
     UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
     bool RestSuccess = false;
 
+    //The raw HttpResponseCode from the server, or 0, if there was none.
     UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
     int32 HttpResponseCode = 0;
 
     TOptional<FString> RestResponseDescription;
+    //If the REST Response Description has been set by this response.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
+
     bool RestResponseDescriptionIsSet() { return RestResponseDescription.IsSet(); };
+    //The REST Response Description, if it exists, as defined in the API schema.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
     FString& GetRestResponseDescription() { return RestResponseDescription.GetValue(); };
 
     TOptional<FString> HttpContentType;
+    //If there was a HTTP Content Type in the response.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
+
     bool HttpContentTypeIsSet() { return HttpContentType.IsSet(); };
+    //The value of the HTTP Content Type from the response.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
     FString& GetHttpContentType() { return HttpContentType.GetValue(); };
 
     TOptional<FString> RestResponseContentString;
+    //If there was a REST protocol response string set.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
+
     bool RestResponseContentStringIsSet() { return RestResponseContentString.IsSet(); };
+    //The value of the REST protocol response string, if it exists.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
     FString& GetRestResponseContentString() { return RestResponseContentString.GetValue(); };
 
+    //An assesment as to if the Parsing of the REST response was successful.
+    //Take this with a grain of salt as it may be too pedantic of a reading of the Schema to
+    //be taken seriously.
     UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
     bool RestParseSuccessful = false;
 
+    //The request that resulted in this response.
     UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
     U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* Request;
 
     bool FromJson(const TSharedPtr<FJsonValue>& JsonValue);
 
 {{#returnType}}{{#responses.0}}
-    {{#isModel}}
+        //The parsed content returned in the response.  If RestParseSuccessful is false, this
+        //will still contain a best effort result of parsing the response string.
         UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
+    {{#isModel}}
         U{{unrealModulePrefix}}{{dataType}}* Content;
     {{/isModel}}{{^isModel}}
         {{#isArray}}{{#items}}
             {{#isModel}}
-        UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
         TArray<U{{unrealModulePrefix}}{{dataType}}*> Content;
             {{/isModel}}{{^isModel}}
-        UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
         {{dataType}} Content;
             {{/isModel}}
         {{/items}}{{/isArray}}{{^isArray}}
-        UPROPERTY(BlueprintReadOnly,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response)
         {{dataType}} Content;
         {{/isArray}}
     {{/isModel}}
