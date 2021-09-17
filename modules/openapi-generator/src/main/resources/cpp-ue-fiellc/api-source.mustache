@@ -368,12 +368,12 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 
 		{{#bodyParams}}
 		{{#required}}
-            WriteJsonValue(Writer, {{paramName}});
+            {{unrealModulePrefix}}WriteJsonValue(Writer, {{paramName}});
 		{{/required}}
 		{{^required}}
 		if ({{paramName}}.IsSet())
 		{
-            WriteJsonValue(Writer, {{paramName}}.GetValue());
+            {{unrealModulePrefix}}WriteJsonValue(Writer, {{paramName}}.GetValue());
 		}
 		{{/required}}
 		{{/bodyParams}}
@@ -390,12 +390,12 @@ void U{{unrealModulePrefix}}{{operationIdCamelCase}}Request::SetupHttpRequest(co
 		{{#formParams}}
 		{{#required}}
 		Writer->WriteIdentifierPrefix(TEXT("{{baseName}}"));
-		WriteJsonValue(Writer, {{paramName}});
+		{{unrealModulePrefix}}WriteJsonValue(Writer, {{paramName}});
 		{{/required}}
 		{{^required}}
 		if ({{paramName}}.IsSet()){
 			Writer->WriteIdentifierPrefix(TEXT("{{baseName}}"));
-            WriteJsonValue(Writer, {{paramName}}.GetValue());
+            {{unrealModulePrefix}}WriteJsonValue(Writer, {{paramName}}.GetValue());
 		}
 		{{/required}}
 		{{/formParams}}
@@ -501,12 +501,12 @@ bool  U{{unrealModulePrefix}}{{operationIdCamelCase}}Response::FromJson(const TS
 {{#returnType}}
     {{#responses.0}}
         {{#isModel}}
-    return TryGetJsonValue(JsonValue, Content);
+    return {{unrealModulePrefix}}TryGetJsonValue(JsonValue, Content);
         {{/isModel}}{{^isModel}}
             {{#isArray}}{{#items}}
-    return TryGetJsonValue(JsonValue, Content);
+    return {{unrealModulePrefix}}TryGetJsonValue(JsonValue, Content);
             {{/items}}{{/isArray}}{{^isArray}}
-    return TryGetJsonValue(JsonValue, Content);
+    return {{unrealModulePrefix}}TryGetJsonValue(JsonValue, Content);
             {{/isArray}}
         {{/isModel}}
     {{/responses.0}}

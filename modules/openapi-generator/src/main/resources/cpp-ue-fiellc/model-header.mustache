@@ -179,9 +179,9 @@ private:
 };
 
 FString ToString(const U{{unrealModulePrefix}}{{classname}}& In_{{classname}});
-void WriteJsonValue(JsonWriter& Writer, U{{unrealModulePrefix}}{{classname}}* Value);
+void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, U{{unrealModulePrefix}}{{classname}}* Value);
 
-inline bool TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, U{{unrealModulePrefix}}{{classname}}*& out_model)
+inline bool {{unrealModulePrefix}}TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, U{{unrealModulePrefix}}{{classname}}*& out_model)
 {
     out_model = NewObject<U{{unrealModulePrefix}}{{classname}}>();
     return out_model->FromJson(JsonValue);
