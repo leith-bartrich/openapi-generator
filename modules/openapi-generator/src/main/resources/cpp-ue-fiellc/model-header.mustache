@@ -23,7 +23,7 @@
 {{#vars}}{{#isEnum}}
 {{#allowableValues}}
 /* Enum for values of {{classname}}{{{enumName}}} */
-UENUM(BlueprintType)
+UENUM(BlueprintType,Category={{unrealModulePrefix}}{{classname}}{{{enumName}}})
 enum class E{{unrealModulePrefix}}{{classname}}{{{enumName}}}
 {
 {{#enumVars}}
@@ -38,7 +38,7 @@ static bool EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{
 
 
 //Blueprint UObject for {{classname}}
-UCLASS(BlueprintType)
+UCLASS(BlueprintType,Category={{unrealModulePrefix}}{{classname}})
 class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public U{{unrealModulePrefix}}Model
 {
 
@@ -46,17 +46,20 @@ class {{dllapi}} U{{unrealModulePrefix}}{{classname}} : public U{{unrealModulePr
 
 public:
 
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}})
+    static U{{unrealModulePrefix}}{{classname}}* CreateNew{{unrealModulePrefix}}{{classname}}() { return NewObject<U{{unrealModulePrefix}}{{classname}}>(); };
+
     bool FromJson(const TSharedPtr<FJsonValue>& JsonValue) override;
     void WriteJson(JsonWriter& Writer) const override;
 
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,has_changed);
     DECLARE_MULTICAST_DELEGATE_TwoParams(FOnChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool);
 
-    UPROPERTY(BlueprintAssignable)
+    UPROPERTY(BlueprintAssignable,Category={{unrealModulePrefix}}{{classname}})
     FOnChangedDelegate OnChangedEvent;
     FOnChangedStaticDelegate OnChangedStaticEvent;
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     bool GetHasChanged() { return this->HasChanged; };
 
     UFUNCTION()
@@ -68,7 +71,7 @@ public:
         }
     }
 
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}})
     void TriggerAllChangedEvents(bool skipHasChangedEvent = false){
     {{#vars}}
         {{#required}}
@@ -112,24 +115,24 @@ public:
     {{/required}}
 
     //events
-    UPROPERTY(BlueprintAssignable)
+    UPROPERTY(BlueprintAssignable,Category={{unrealModulePrefix}}{{classname}})
     FOn{{name}}ChangedDelegate On{{name}}ChangedEvent;
     FOn{{name}}ChangedStaticDelegate On{{name}}ChangedStaticEvent;
 
     //isSet
     {{^required}}
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     bool {{name}}IsSet() const {return this->{{name}}.IsSet();};
     {{/required}}
 
     //getter
     {{#isEnum}}
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     const E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} Get{{name}}() const {
             return this->{{name}}{{^required}}.Get({{#defaultValue}}{{{.}}}{{/defaultValue}}){{/required}};
     };
     {{/isEnum}}{{^isEnum}}
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     const {{{datatype}}} Get{{name}}() const {
         {{#required}}
         return this->{{name}};
@@ -147,7 +150,7 @@ public:
     {{/isEnum}}
 
     //setter
-    UFUNCTION(BlueprintCallable)
+    UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}})
     {{#isEnum}}
     void Set{{name}}(E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} In_{{name}}) {
     {{/isEnum}}{{^isEnum}}

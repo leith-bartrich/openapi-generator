@@ -6,6 +6,7 @@
 #include "HttpModule.h"
 #include "Serialization/JsonSerializer.h"
 #include "PlatformHttp.h"
+#include "HttpModule.h"
 
 {{#imports}}#include "{{classname}}.h"
 {{/imports}}
@@ -202,7 +203,7 @@ void U{{unrealModulePrefix}}{{classname}}::ClearHeaderParams( )
 {{#operation}}
 U{{unrealModulePrefix}}ActiveRequestHandle* U{{unrealModulePrefix}}{{classname}}::Do{{operationIdCamelCase}}RequestStatic(U{{unrealModulePrefix}}{{operationIdCamelCase}}Request* In_Request, TFunction<void(U{{unrealModulePrefix}}{{operationIdCamelCase}}Response*)> on_response){
     auto cancel_handle = NewObject<U{{unrealModulePrefix}}ActiveRequestHandle>();
-    auto httpRequest = FHttpModule::Get().CreateRequest();
+    auto httpRequest = this->Create{{operationIdCamelCase}}HttpRequest();
     httpRequest->SetURL(*(Url + In_Request->ComputePath()));
 
     for(const auto& It : this->AdditionalHeaderParams)
@@ -210,7 +211,7 @@ U{{unrealModulePrefix}}ActiveRequestHandle* U{{unrealModulePrefix}}{{classname}}
     httpRequest->SetHeader(It.Key, It.Value);
     }
 
-    In_Request->SetupHttpRequest(httpRequest);
+    In_Request->SetupHttpRequest(httpRequest.ToSharedRef());
     In_Request->HttpRequest = httpRequest;
     httpRequest->OnProcessRequestComplete().BindLambda([this,In_Request,on_response](FHttpRequestPtr request, FHttpResponsePtr response, bool connectedSuccessfully)
     {
