@@ -360,6 +360,11 @@ inline FString ToString(const TArray<uint8>& Value)
     return Base64UrlEncode(Value);
 }
 
+inline FString ToString(const FGuid& Value)
+{
+    return Value.ToString();
+}
+
 //// ToStringFormatArg
 
 inline FStringFormatArg ToStringFormatArg(FString& Value)

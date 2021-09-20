@@ -182,7 +182,7 @@ public:
     {{/isEnum}}
         {{^required}}bool was_set = this->{{name}}.IsSet(); {{/required}}
         auto old_val = this->Get{{name}}();
-        if ( {{^required}} was_set && {{/required}} (old_val == In_{{name}})){
+        if ( {{^required}} was_set && ({{/required}}old_val == In_{{name}}{{^required}}){{/required}}){
             //don't do anything if the value isn't actually different.
             return;
         }
