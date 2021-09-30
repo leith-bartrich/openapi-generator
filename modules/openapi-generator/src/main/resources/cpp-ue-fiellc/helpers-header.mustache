@@ -114,6 +114,19 @@ inline bool {{unrealModulePrefix}}TryGetJsonValue(const TSharedPtr<FJsonValue>& 
         return false;
 }
 
+inline bool {{unrealModulePrefix}}TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, int& Value)
+{
+    int TmpValue;
+    if (JsonValue->TryGetNumber(TmpValue))
+    {
+        Value = TmpValue;
+        return true;
+    }
+    else
+        return false;
+}
+
+
 inline bool {{unrealModulePrefix}}TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, TSharedPtr<FJsonValue>& JsonObjectValue)
 {
     JsonObjectValue = JsonValue;

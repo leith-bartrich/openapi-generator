@@ -214,66 +214,69 @@ U{{unrealModulePrefix}}ActiveRequestHandle* U{{unrealModulePrefix}}{{classname}}
     In_Request->SetupHttpRequest(httpRequest.ToSharedRef());
     In_Request->HttpRequest = httpRequest;
     httpRequest->OnProcessRequestComplete().BindLambda([this,In_Request,on_response](FHttpRequestPtr request, FHttpResponsePtr response, bool connectedSuccessfully)
-    {
-    this->Processing_Requests.Remove(In_Request);
-    auto restResponse = NewObject<U{{unrealModulePrefix}}{{operationIdCamelCase}}Response>();
-    restResponse->Request = In_Request;
+        {
+            this->Processing_Requests.Remove(In_Request);
+            auto restResponse = NewObject<U{{unrealModulePrefix}}{{operationIdCamelCase}}Response>();
+            restResponse->Request = In_Request;
 
-    auto requestStatus = request->GetStatus();
-    if (requestStatus == EHttpRequestStatus::Failed){
-    restResponse->HttpRequestFailed = true;
-    restResponse->HttpConnectionFailed = false;
-    on_response(restResponse);
-    return;
-    }
+            auto requestStatus = request->GetStatus();
+            if (requestStatus == EHttpRequestStatus::Failed){
+            restResponse->HttpRequestFailed = true;
+            restResponse->HttpConnectionFailed = false;
+            on_response(restResponse);
+            return;
+            }
 
-    if (requestStatus == EHttpRequestStatus::Failed_ConnectionError){
-    restResponse->HttpRequestFailed = true;
-    restResponse->HttpConnectionFailed = true;
-    on_response(restResponse);
-    return;
-    }
+            if (requestStatus == EHttpRequestStatus::Failed_ConnectionError){
+            restResponse->HttpRequestFailed = true;
+            restResponse->HttpConnectionFailed = true;
+            on_response(restResponse);
+            return;
+            }
 
-    restResponse->HttpResponseCode = response->GetResponseCode();
-    restResponse->RestSuccess = EHttpResponseCodes::IsOk(restResponse->HttpResponseCode);
+            restResponse->HttpResponseCode = response->GetResponseCode();
+            restResponse->RestSuccess = EHttpResponseCodes::IsOk(restResponse->HttpResponseCode);
 
-    switch ((int32)restResponse->HttpResponseCode)
-    {
-    {{#responses}}
-        case {{code}}:
-        {{#isDefault}}
-            default:
-        {{/isDefault}}
-        restResponse->RestResponseDescription = TEXT("{{message}}");
-        break;
-    {{/responses}}
-    }
+            switch ((int32)restResponse->HttpResponseCode)
+            {
+            {{#responses}}
+                case {{code}}:
+                {{#isDefault}}
+                    default:
+                {{/isDefault}}
+                restResponse->RestResponseDescription = TEXT("{{message}}");
+                break;
+            {{/responses}}
+            }
 
-    restResponse->HttpContentType = response->GetContentType();
+            restResponse->HttpContentType = response->GetContentType();
 
-    if (restResponse->HttpContentType.GetValue().IsEmpty()){
-    on_response(restResponse);
-    return;
-    } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("application/json")) || restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/json"))) {
-    restResponse->RestResponseContentString = response->GetContentAsString();
-    TSharedPtr<FJsonValue> JsonValue;
-    auto Reader = TJsonReaderFactory<>::Create(restResponse->RestResponseContentString.GetValue());
-    bool deserialized = FJsonSerializer::Deserialize(Reader, JsonValue);
-    bool validJSON = JsonValue.IsValid();
-    if (!(deserialized & validJSON)){
-    on_response(restResponse);
-    return;
-    }
-    bool parseSuccessful = restResponse->FromJson(JsonValue);
-    restResponse->RestParseSuccessful = parseSuccessful;
-    on_response(restResponse);
-    return;
-    } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/plain"))) {
-    restResponse->RestResponseContentString = response->GetContentAsString();
-    on_response(restResponse);
-    return;
-    }
-    });
+            if (restResponse->HttpContentType.GetValue().IsEmpty()){
+                on_response(restResponse);
+                return;
+            } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("application/json")) || restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/json"))) {
+                restResponse->RestResponseContentString = response->GetContentAsString();
+                TSharedPtr<FJsonValue> JsonValue;
+                auto Reader = TJsonReaderFactory<>::Create(restResponse->RestResponseContentString.GetValue());
+                bool deserialized = FJsonSerializer::Deserialize(Reader, JsonValue);
+                bool validJSON = JsonValue.IsValid();
+                if (!(deserialized & validJSON)){
+                    on_response(restResponse);
+                    return;
+                }
+                bool parseSuccessful = restResponse->FromJson(JsonValue);
+                restResponse->RestParseSuccessful = parseSuccessful;
+                on_response(restResponse);
+                return;
+            } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/plain"))) {
+                restResponse->RestResponseContentString = response->GetContentAsString();
+                on_response(restResponse);
+                return;
+            } else {
+                on_response(restResponse);
+                return;
+            }
+        });
     httpRequest->ProcessRequest();
     this->Processing_Requests.Add(In_Request);
     cancel_handle->HttpRequest = httpRequest;
