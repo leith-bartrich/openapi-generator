@@ -20,8 +20,15 @@ class {{dllapi}} U{{unrealModulePrefix}}Model : public UObject
 
 public:
 
-    virtual bool FromJson(const TSharedPtr<FJsonValue>& JsonValue) PURE_VIRTUAL(UFPLModel::FromJson,return false; );
-    virtual void WriteJson(JsonWriter& Writer) const PURE_VIRTUAL(UFPLModel::WriteJson,return; );
+    //An optional convenient 'source' for this model.  You are free to use this as you wish.  It is not serialized to/from
+    //JSON or the server.  It is purely client/application specific.  When you acquire Models from server responses, from
+    //deserializing json data, or from NewObject<>(), you can tag them as having come from somewhere relevant, with this
+    //field.  Or you can ignore it.
+    UPROPERTY(BlueprintReadWrite,Category="{{unrealModulePrefix}}Model")
+    UObject* ModelSource;
+
+    virtual bool FromJson(const TSharedPtr<FJsonValue>& JsonValue) PURE_VIRTUAL(U{{unrealModulePrefix}}Model::FromJson,return false; );
+    virtual void WriteJson(JsonWriter& Writer) const PURE_VIRTUAL(U{{unrealModulePrefix}}Model::WriteJson,return; );
 
 };
 
@@ -275,7 +282,13 @@ inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const TArra
 }
 */
 
-inline void FPLWriteJsonValue(JsonWriter& Writer, const bool& Value)
+inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const int& Value)
+{
+    Writer->WriteValue(Value);
+}
+
+
+inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const bool& Value)
 {
     Writer->WriteValue(Value);
 }

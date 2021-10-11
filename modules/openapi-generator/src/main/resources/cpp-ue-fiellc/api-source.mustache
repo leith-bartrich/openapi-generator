@@ -268,7 +268,7 @@ U{{unrealModulePrefix}}ActiveRequestHandle* U{{unrealModulePrefix}}{{classname}}
                 restResponse->RestParseSuccessful = parseSuccessful;
                 on_response(restResponse);
                 return;
-            } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/plain"))) {
+            } else if (restResponse->HttpContentType.GetValue().StartsWith(TEXT("text/"))) {
                 restResponse->RestResponseContentString = response->GetContentAsString();
                 on_response(restResponse);
                 return;

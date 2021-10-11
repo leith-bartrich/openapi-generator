@@ -258,7 +258,6 @@ public:
     TOptional<FString> HttpContentType;
     //If there was a HTTP Content Type in the response.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
-
     bool HttpContentTypeIsSet() { return HttpContentType.IsSet(); };
     //The value of the HTTP Content Type from the response.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
@@ -267,7 +266,6 @@ public:
     TOptional<FString> RestResponseContentString;
     //If there was a REST protocol response string set.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
-
     bool RestResponseContentStringIsSet() { return RestResponseContentString.IsSet(); };
     //The value of the REST protocol response string, if it exists.
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{operationIdCamelCase}}Response,BlueprintPure)
