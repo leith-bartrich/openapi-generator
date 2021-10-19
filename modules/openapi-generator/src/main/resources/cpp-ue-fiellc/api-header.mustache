@@ -152,6 +152,7 @@ private:
 
     UPROPERTY()
     TArray<U{{unrealModulePrefix}}{{operationIdCamelCase}}Request*> Processing_Requests;
+
 };
 
 UCLASS(BlueprintType, Abstract)
@@ -184,6 +185,13 @@ public:
     FString ComputePath() const;
 
     FHttpRequestPtr HttpRequest;
+
+    // A user/application convenience property to attach/tag whatever is useful(a request context), and make it available
+    // to the response handler.
+    // The Request is available from the Response.  Therefore, so is the Tag.
+    // Can be left null.
+    UPROPERTY(BlueprintReadWrite,Category="{{unrealModulePrefix}}|Requests|{{unrealModulePrefix}}{{operationIdCamelCase}}Request")
+    UObject* Tag;
 
 {{#allParams}}
 {{#isEnum}}
