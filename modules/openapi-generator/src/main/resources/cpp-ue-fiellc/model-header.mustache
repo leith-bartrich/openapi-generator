@@ -24,7 +24,7 @@
 {{#allowableValues}}
 /* Enum for values of {{classname}}{{{enumName}}} */
 UENUM(BlueprintType,Category={{unrealModulePrefix}}{{classname}}{{{enumName}}})
-enum class E{{unrealModulePrefix}}{{classname}}{{{enumName}}}
+enum class E{{unrealModulePrefix}}{{classname}}{{{enumName}}} : uint8
 {
 {{#enumVars}}
     {{name}},{{/enumVars}}
@@ -116,23 +116,33 @@ public:
     DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, {{{datatype}}}*,bool ,{{{datatype}}}*);
         {{/required}}
     {{/isModel}}{{^isModel}}
-        {{#isString}}
+        {{#isEnum}}
             {{#required}}
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,const {{{datatype}}}&,from,const {{{datatype}}}&,to);
-    DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,const {{{datatype}}}&,const {{{datatype}}}&);
+                    DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&,from,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&,to);
+                    DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&);
             {{/required}}{{^required}}
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set,const {{{datatype}}}&,from,bool,is_set,const {{{datatype}}}&,to);
-    DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, const {{{datatype}}}&,bool ,const {{{datatype}}}&);
+                    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&,from,bool,is_set,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&,to);
+                    DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&,bool ,const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}&);
             {{/required}}
-        {{/isString}}{{^isString}}
-            {{#required}}
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,{{{datatype}}},from,{{{datatype}}},to);
-    DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*, {{{datatype}}}, {{{datatype}}});
-            {{/required}}{{^required}}
-    DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set, {{{datatype}}},from,bool,is_set, {{{datatype}}},to);
-    DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, {{{datatype}}},bool, {{{datatype}}});
-            {{/required}}
-        {{/isString}}
+        {{/isEnum}}{{^isEnum}}
+            {{#isString}}
+                {{#required}}
+                        DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,const {{{datatype}}}&,from,const {{{datatype}}}&,to);
+                        DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,const {{{datatype}}}&,const {{{datatype}}}&);
+                {{/required}}{{^required}}
+                        DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set,const {{{datatype}}}&,from,bool,is_set,const {{{datatype}}}&,to);
+                        DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, const {{{datatype}}}&,bool ,const {{{datatype}}}&);
+                {{/required}}
+            {{/isString}}{{^isString}}
+                {{#required}}
+                        DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,{{{datatype}}},from,{{{datatype}}},to);
+                        DECLARE_MULTICAST_DELEGATE_ThreeParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*, {{{datatype}}}, {{{datatype}}});
+                {{/required}}{{^required}}
+                        DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedDelegate,U{{unrealModulePrefix}}{{classname}}*,source,bool,was_set, {{{datatype}}},from,bool,is_set, {{{datatype}}},to);
+                        DECLARE_MULTICAST_DELEGATE_FiveParams(FOn{{name}}ChangedStaticDelegate,U{{unrealModulePrefix}}{{classname}}*,bool, {{{datatype}}},bool, {{{datatype}}});
+                {{/required}}
+            {{/isString}}
+        {{/isEnum}}
     {{/isModel}}
 
     //events
@@ -152,7 +162,7 @@ public:
     {{#isEnum}}
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)
     const E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}} Get{{name}}() const {
-            return this->{{name}}{{^required}}.Get({{#defaultValue}}{{{.}}}{{/defaultValue}}){{/required}};
+            return this->{{name}}{{^required}}.Get(E{{unrealModulePrefix}}{{classname}}{{{datatypeWithEnum}}}()){{/required}};
     };
     {{/isEnum}}{{^isEnum}}
     UFUNCTION(BlueprintCallable,Category={{unrealModulePrefix}}{{classname}},BlueprintPure)

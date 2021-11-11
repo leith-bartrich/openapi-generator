@@ -10,7 +10,7 @@
 {{#hasEnums}}
 {{#vars}}{{#isEnum}}
 //utility functions for string conversion of E{{unrealModulePrefix}}{{classname}}{{{enumName}}}
-static FString E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+static FString EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
 {
 {{#allowableValues}}
     switch (EnumValue)
@@ -25,7 +25,7 @@ static FString E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumToString(
     return TEXT("");
 }
 
-static bool E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+static bool EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
 {
     static TMap<FString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}> StringToEnum = { {{#allowableValues}}{{#enumVars}}
     { TEXT("{{{value}}}"), E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::{{name}} },{{/enumVars}}{{/allowableValues}} };
@@ -39,25 +39,25 @@ static bool E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumFromString(c
 
 inline bool FromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& Value)
 {
-    return E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumFromString(EnumAsString,Value);
+    return EnumFromString(EnumAsString,Value);
 }
 
 inline FString ToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
 {
-    return E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::EnumToString(EnumValue);
+    return EnumToString(EnumValue);
 }
 
-inline FStringFormatArg ToStringFormatArg(const E{{unrealModulePrefix}}{{classname}}::{{{enumName}}}& Value)
+inline FStringFormatArg ToStringFormatArg(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& Value)
 {
     return FStringFormatArg(ToString(Value));
 }
 
-inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const E{{unrealModulePrefix}}{{classname}}::{{{enumName}}}& Value)
+inline void {{unrealModulePrefix}}WriteJsonValue(JsonWriter& Writer, const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& Value)
 {
     {{unrealModulePrefix}}WriteJsonValue(Writer, ToString(Value));
 }
 
-inline bool {{unrealModulePrefix}}TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, E{{unrealModulePrefix}}{{classname}}::{{{enumName}}}& Value)
+inline bool {{unrealModulePrefix}}TryGetJsonValue(const TSharedPtr<FJsonValue>& JsonValue, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& Value)
 {
     {{#allowableValues}}
     FString TmpValue;
