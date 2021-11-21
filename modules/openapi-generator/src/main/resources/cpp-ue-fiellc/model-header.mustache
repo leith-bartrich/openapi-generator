@@ -32,8 +32,35 @@ enum class E{{unrealModulePrefix}}{{classname}}{{{enumName}}} : uint8
 {{/allowableValues}}
 
 //utility functions for string conversion of {{classname}}{{{enumName}}}
-static FString EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue);
-static bool EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue);
+
+static FString EnumToString(const E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+{
+{{#allowableValues}}
+    switch (EnumValue)
+    {
+    {{#enumVars}}
+        case E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::{{name}}:
+        return TEXT("{{{value}}}");
+    {{/enumVars}}
+    }
+{{/allowableValues}}
+    checkf(true, TEXT("Invalid E{{unrealModulePrefix}}{{classname}}::{{{enumName}}} Value (%d)"), (int)EnumValue)
+    return TEXT("");
+}
+
+static bool EnumFromString(const FString& EnumAsString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}& EnumValue)
+{
+    static TMap<FString, E{{unrealModulePrefix}}{{classname}}{{{enumName}}}> StringToEnum = { {{#allowableValues}}{{#enumVars}}
+        { TEXT("{{{value}}}"), E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::{{name}} },{{/enumVars}}{{/allowableValues}} };
+
+    const auto Found = StringToEnum.Find(EnumAsString);
+    if(Found){
+        EnumValue = *Found;
+    }
+    return Found != nullptr;
+}
+
+ENUM_RANGE_BY_VALUES(E{{unrealModulePrefix}}{{classname}}{{{enumName}}}{{#allowableValues}}{{#enumVars}},E{{unrealModulePrefix}}{{classname}}{{{enumName}}}::{{name}}{{/enumVars}}{{/allowableValues}})
 {{/isEnum}}{{/vars}}
 
 /* {{classname}} Model.  {{description}} */
